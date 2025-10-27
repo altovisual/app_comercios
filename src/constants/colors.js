@@ -1,35 +1,44 @@
 export const COLORS = {
-  // Colores principales
-  primary: '#FF6B35',      // Naranja vibrante
-  secondary: '#004E89',    // Azul oscuro
-  success: '#06D6A0',      // Verde
-  warning: '#FFD23F',      // Amarillo
-  danger: '#EF476F',       // Rojo
-  info: '#4ECDC4',         // Turquesa
+  // Colores principales - Paleta moderna iOS
+  primary: '#007AFF',      // Azul iOS
+  primaryDark: '#0051D5',
+  primaryLight: '#4DA3FF',
+  secondary: '#5856D6',    // Púrpura iOS
+  success: '#34C759',      // Verde iOS
+  warning: '#FF9500',      // Naranja iOS
+  danger: '#FF3B30',       // Rojo iOS
+  info: '#5AC8FA',         // Azul claro iOS
   
   // Colores de fondo
-  background: '#F7F7F7',
-  backgroundDark: '#E8E8E8',
+  background: '#F2F2F7',   // Gris claro iOS
+  backgroundDark: '#E5E5EA',
   card: '#FFFFFF',
+  overlay: 'rgba(0, 0, 0, 0.4)',
   
   // Colores de texto
-  text: '#2D3142',
-  textLight: '#9FA2B4',
-  textDark: '#1A1A1A',
+  text: '#000000',
+  textSecondary: '#3C3C43',
+  textLight: '#8E8E93',
+  textDark: '#1C1C1E',
   
   // Colores de UI
-  border: '#E0E0E0',
-  borderLight: '#F0F0F0',
+  border: '#C6C6C8',
+  borderLight: '#E5E5EA',
+  separator: '#D1D1D6',
   shadow: '#000000',
   
   // Estados de pedidos
-  pending: '#FFD23F',      // Amarillo
-  accepted: '#4ECDC4',     // Turquesa
-  preparing: '#FF6B35',    // Naranja
-  ready: '#06D6A0',        // Verde
-  picked_up: '#9B59B6',    // Morado
-  delivered: '#27AE60',    // Verde oscuro
-  cancelled: '#EF476F',    // Rojo
+  pending: '#FF9500',      // Naranja
+  accepted: '#5AC8FA',     // Azul claro
+  preparing: '#FF9500',    // Naranja
+  ready: '#34C759',        // Verde
+  picked_up: '#5856D6',    // Púrpura
+  delivered: '#34C759',    // Verde
+  cancelled: '#FF3B30',    // Rojo
+  
+  // Gradientes
+  gradientStart: '#007AFF',
+  gradientEnd: '#5856D6',
   
   // Otros
   white: '#FFFFFF',

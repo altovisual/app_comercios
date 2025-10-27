@@ -1,24 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TextInput,
-  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Dimensions,
+  ScrollView,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../../constants';
 import { useAuth } from '../../context/AuthContext';
+import { getDeviceType } from '../../utils/responsive';
+import { Input, Button } from '../../components';
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+  const [deviceType, setDeviceType] = useState(getDeviceType());
+
+  useEffect(() => {
+    const subscription = Dimensions.addEventListener('change', () => {
+      setDeviceType(getDeviceType());
+    });
+    return () => subscription?.remove();
+  }, []);
+
+  const isDesktop = deviceType === 'desktop';
+  const isTablet = deviceType === 'tablet';
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -40,70 +52,69 @@ export default function LoginScreen({ navigation }) {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <View style={styles.content}>
-        {/* Logo/Header */}
-        <View style={styles.header}>
-          <Text style={styles.logo}>🏪</Text>
-          <Text style={styles.title}>MotoTaxi Comercios</Text>
-          <Text style={styles.subtitle}>Gestiona tus pedidos</Text>
-        </View>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={[styles.content, (isDesktop || isTablet) && styles.contentCentered]}>
+          {/* Logo Section */}
+          <View style={styles.logoSection}>
+            <LinearGradient
+              colors={[COLORS.primary, COLORS.primaryDark]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.logoGradient}
+            >
+              <Text style={styles.logo}>🏪</Text>
+            </LinearGradient>
+            <Text style={styles.title}>MotoTaxi Comercios</Text>
+            <Text style={styles.subtitle}>Gestiona tus pedidos de forma simple</Text>
+          </View>
 
-        {/* Form */}
-        <View style={styles.form}>
-          <View style={styles.inputContainer}>
-            <Ionicons name="mail-outline" size={20} color={COLORS.textLight} />
-            <TextInput
-              style={styles.input}
-              placeholder="Correo electrónico"
+          {/* Form */}
+          <View style={[styles.formWrapper, (isDesktop || isTablet) && styles.formWrapperLarge]}>
+            <Input
+              label="Correo electrónico"
               value={email}
               onChangeText={setEmail}
+              placeholder="tu@email.com"
+              icon="mail-outline"
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
             />
-          </View>
 
-          <View style={styles.inputContainer}>
-            <Ionicons name="lock-closed-outline" size={20} color={COLORS.textLight} />
-            <TextInput
-              style={styles.input}
-              placeholder="Contraseña"
+            <Input
+              label="Contraseña"
               value={password}
               onChangeText={setPassword}
-              secureTextEntry={!showPassword}
+              placeholder="••••••••"
+              icon="lock-closed-outline"
+              secureTextEntry
               autoCapitalize="none"
             />
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-              <Ionicons
-                name={showPassword ? 'eye-outline' : 'eye-off-outline'}
-                size={20}
-                color={COLORS.textLight}
+
+            <Button
+              title={loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+              onPress={handleLogin}
+              loading={loading}
+              disabled={loading}
+              style={styles.loginButton}
+            />
+
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>¿No tienes cuenta? </Text>
+              <Button
+                title="Regístrate"
+                variant="ghost"
+                size="small"
+                onPress={() => navigation.navigate('Register')}
               />
-            </TouchableOpacity>
-          </View>
-
-          <TouchableOpacity style={styles.forgotPassword}>
-            <Text style={styles.forgotPasswordText}>¿Olvidaste tu contraseña?</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.loginButton, loading && styles.loginButtonDisabled]}
-            onPress={handleLogin}
-            disabled={loading}
-          >
-            <Text style={styles.loginButtonText}>
-              {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
-            </Text>
-          </TouchableOpacity>
-
-          <View style={styles.registerContainer}>
-            <Text style={styles.registerText}>¿No tienes cuenta? </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-              <Text style={styles.registerLink}>Regístrate</Text>
-            </TouchableOpacity>
+            </View>
           </View>
         </View>
-      </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
@@ -113,83 +124,74 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
+  scrollContent: {
+    flexGrow: 1,
+  },
   content: {
     flex: 1,
     justifyContent: 'center',
     padding: 24,
   },
-  header: {
+  contentCentered: {
+    alignItems: 'center',
+  },
+  logoSection: {
     alignItems: 'center',
     marginBottom: 48,
   },
+  logoGradient: {
+    width: 100,
+    height: 100,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 8,
+  },
   logo: {
-    fontSize: 80,
-    marginBottom: 16,
+    fontSize: 56,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     color: COLORS.text,
     marginBottom: 8,
+    textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 15,
     color: COLORS.textLight,
+    textAlign: 'center',
   },
-  form: {
+  formWrapper: {
     width: '100%',
   },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  formWrapperLarge: {
+    maxWidth: 440,
     backgroundColor: COLORS.white,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  input: {
-    flex: 1,
-    marginLeft: 12,
-    fontSize: 16,
-    color: COLORS.text,
-  },
-  forgotPassword: {
-    alignSelf: 'flex-end',
-    marginBottom: 24,
-  },
-  forgotPasswordText: {
-    color: COLORS.primary,
-    fontSize: 14,
+    padding: 32,
+    borderRadius: 24,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 8,
   },
   loginButton: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginBottom: 24,
+    marginTop: 8,
   },
-  loginButtonDisabled: {
-    opacity: 0.6,
-  },
-  loginButtonText: {
-    color: COLORS.white,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  registerContainer: {
+  footer: {
     flexDirection: 'row',
     justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 24,
   },
-  registerText: {
+  footerText: {
+    fontSize: 14,
     color: COLORS.textLight,
-    fontSize: 14,
-  },
-  registerLink: {
-    color: COLORS.primary,
-    fontSize: 14,
-    fontWeight: 'bold',
   },
 });

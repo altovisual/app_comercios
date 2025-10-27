@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,15 +6,30 @@ import {
   ScrollView,
   TouchableOpacity,
   SafeAreaView,
+  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, ORDER_STATUS } from '../../constants';
 import { useAuth } from '../../context/AuthContext';
 import { useOrders } from '../../context/OrderContext';
+import { getDeviceType } from '../../utils/responsive';
+import { Card, StatCard, Badge } from '../../components';
 
 export default function HomeScreen({ navigation }) {
   const { store } = useAuth();
   const { orders, activeOrders, pendingCount } = useOrders();
+  const [deviceType, setDeviceType] = useState(getDeviceType());
+
+  useEffect(() => {
+    const subscription = Dimensions.addEventListener('change', () => {
+      setDeviceType(getDeviceType());
+    });
+    return () => subscription?.remove();
+  }, []);
+
+  const isDesktop = deviceType === 'desktop';
+  const isTablet = deviceType === 'tablet';
 
   const todayOrders = orders.filter(o => {
     const orderDate = new Date(o.createdAt);
@@ -28,118 +43,196 @@ export default function HomeScreen({ navigation }) {
 
   const completedToday = todayOrders.filter(o => o.status === ORDER_STATUS.DELIVERED).length;
 
-  const stats = [
-    {
-      icon: 'receipt-outline',
-      label: 'Pedidos Activos',
-      value: activeOrders.length,
+  const quickActions = [
+    { 
+      icon: 'receipt', 
+      label: 'Pedidos', 
       color: COLORS.primary,
+      screen: 'Orders',
+      badge: activeOrders.length > 0 ? activeOrders.length : null
     },
-    {
-      icon: 'time-outline',
-      label: 'Pendientes',
-      value: pendingCount,
-      color: COLORS.warning,
-    },
-    {
-      icon: 'checkmark-done-outline',
-      label: 'Completados Hoy',
-      value: completedToday,
+    { 
+      icon: 'restaurant', 
+      label: 'Menú', 
       color: COLORS.success,
+      screen: 'Menu'
     },
-    {
-      icon: 'cash-outline',
-      label: 'Ventas del Día',
-      value: `$${todaySales.toFixed(2)}`,
-      color: COLORS.secondary,
+    { 
+      icon: 'stats-chart', 
+      label: 'Estadísticas', 
+      color: COLORS.info,
+      screen: 'Stats'
+    },
+    { 
+      icon: 'settings', 
+      label: 'Ajustes', 
+      color: COLORS.textLight,
+      screen: 'Settings'
     },
   ];
 
+  const getStatusVariant = (status) => {
+    const variants = {
+      [ORDER_STATUS.PENDING]: 'warning',
+      [ORDER_STATUS.ACCEPTED]: 'info',
+      [ORDER_STATUS.PREPARING]: 'warning',
+      [ORDER_STATUS.READY]: 'success',
+      [ORDER_STATUS.DELIVERED]: 'success',
+      [ORDER_STATUS.CANCELLED]: 'danger',
+    };
+    return variants[status] || 'neutral';
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.greeting}>Hola 👋</Text>
-            <Text style={styles.storeName}>{store?.name || 'Mi Comercio'}</Text>
-          </View>
-          <TouchableOpacity style={styles.storeStatus}>
-            <View style={[styles.statusDot, { backgroundColor: store?.isOpen ? COLORS.success : COLORS.danger }]} />
-            <Text style={styles.statusText}>{store?.isOpen ? 'Abierto' : 'Cerrado'}</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Stats Grid */}
-        <View style={styles.statsGrid}>
-          {stats.map((stat, index) => (
-            <View key={index} style={styles.statCard}>
-              <View style={[styles.statIcon, { backgroundColor: stat.color + '20' }]}>
-                <Ionicons name={stat.icon} size={24} color={stat.color} />
-              </View>
-              <Text style={styles.statValue}>{stat.value}</Text>
-              <Text style={styles.statLabel}>{stat.label}</Text>
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[styles.scrollContent, isDesktop && styles.scrollContentDesktop]}
+      >
+        {/* Header con gradiente */}
+        <LinearGradient
+          colors={[COLORS.primary, COLORS.primaryDark]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.headerGradient}
+        >
+          <View style={styles.headerContent}>
+            <View>
+              <Text style={styles.greeting}>Hola 👋</Text>
+              <Text style={styles.storeName}>{store?.name || 'Mi Comercio'}</Text>
             </View>
-          ))}
+            <TouchableOpacity style={styles.storeStatusBadge}>
+              <View style={[styles.statusDot, { 
+                backgroundColor: store?.isOpen ? COLORS.success : COLORS.danger 
+              }]} />
+              <Text style={styles.statusText}>
+                {store?.isOpen ? 'Abierto' : 'Cerrado'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </LinearGradient>
+
+        {/* Stats Cards */}
+        <View style={styles.statsSection}>
+          <View style={[styles.statsGrid, isDesktop && styles.statsGridDesktop]}>
+            <StatCard
+              icon="receipt-outline"
+              label="Pedidos Activos"
+              value={activeOrders.length.toString()}
+              color={COLORS.primary}
+              trend={activeOrders.length > 5 ? 'up' : null}
+              trendValue="+12%"
+              style={[styles.statCard, isDesktop && styles.statCardDesktop]}
+            />
+            <StatCard
+              icon="time-outline"
+              label="Pendientes"
+              value={pendingCount.toString()}
+              color={COLORS.warning}
+              style={[styles.statCard, isDesktop && styles.statCardDesktop]}
+            />
+            <StatCard
+              icon="checkmark-done-outline"
+              label="Completados Hoy"
+              value={completedToday.toString()}
+              color={COLORS.success}
+              trend="up"
+              trendValue="+8%"
+              style={[styles.statCard, isDesktop && styles.statCardDesktop]}
+            />
+            <StatCard
+              icon="cash-outline"
+              label="Ventas del Día"
+              value={`$${todaySales.toFixed(2)}`}
+              color={COLORS.secondary}
+              trend="up"
+              trendValue="+15%"
+              style={[styles.statCard, isDesktop && styles.statCardDesktop]}
+            />
+          </View>
         </View>
 
         {/* Quick Actions */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Acciones Rápidas</Text>
-          <View style={styles.actionsGrid}>
-            <TouchableOpacity 
-              style={styles.actionCard}
-              onPress={() => navigation.navigate('Orders')}
-            >
-              <Ionicons name="receipt" size={32} color={COLORS.primary} />
-              <Text style={styles.actionText}>Ver Pedidos</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.actionCard}
-              onPress={() => navigation.navigate('Menu')}
-            >
-              <Ionicons name="restaurant" size={32} color={COLORS.success} />
-              <Text style={styles.actionText}>Gestionar Menú</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.actionCard}>
-              <Ionicons name="stats-chart" size={32} color={COLORS.secondary} />
-              <Text style={styles.actionText}>Estadísticas</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.actionCard}>
-              <Ionicons name="settings" size={32} color={COLORS.textLight} />
-              <Text style={styles.actionText}>Configuración</Text>
-            </TouchableOpacity>
+          <View style={[styles.actionsGrid, isDesktop && styles.actionsGridDesktop]}>
+            {quickActions.map((action, index) => (
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.actionCard,
+                  isDesktop && styles.actionCardDesktop,
+                  !isDesktop && styles.actionCardMobile
+                ]}
+                onPress={() => action.screen && navigation.navigate(action.screen)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.actionContent}>
+                  <View style={[styles.actionIconContainer, { backgroundColor: action.color + '15' }]}>
+                    <Ionicons name={action.icon} size={isDesktop ? 28 : 24} color={action.color} />
+                    {action.badge && (
+                      <View style={styles.actionBadge}>
+                        <Text style={styles.actionBadgeText}>{action.badge}</Text>
+                      </View>
+                    )}
+                  </View>
+                  <View style={styles.actionTextContainer}>
+                    <Text style={[styles.actionLabel, !isDesktop && styles.actionLabelMobile]}>{action.label}</Text>
+                    {!isDesktop && action.badge && (
+                      <Text style={styles.actionSubtext}>{action.badge} nuevo{action.badge > 1 ? 's' : ''}</Text>
+                    )}
+                  </View>
+                </View>
+                {!isDesktop && <Ionicons name="chevron-forward" size={18} color={COLORS.textLight} style={styles.chevron} />}
+              </TouchableOpacity>
+            ))}
           </View>
         </View>
 
-        {/* Recent Orders */}
+        {/* Active Orders */}
         {activeOrders.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Pedidos Activos</Text>
               <TouchableOpacity onPress={() => navigation.navigate('Orders')}>
-                <Text style={styles.seeAll}>Ver todos</Text>
+                <Text style={styles.seeAllText}>Ver todos</Text>
               </TouchableOpacity>
             </View>
             {activeOrders.slice(0, 3).map((order) => (
-              <TouchableOpacity key={order.id} style={styles.orderCard}>
+              <Card key={order.id} style={styles.orderCard}>
                 <View style={styles.orderHeader}>
-                  <Text style={styles.orderId}>#{order.id.slice(-6)}</Text>
-                  <View style={[styles.statusBadge, { backgroundColor: COLORS[order.status] + '20' }]}>
-                    <Text style={[styles.statusText, { color: COLORS[order.status] }]}>
-                      {order.status}
-                    </Text>
+                  <View style={styles.orderHeaderLeft}>
+                    <Text style={styles.orderId}>#{order.id.slice(-6)}</Text>
+                    <Badge 
+                      label={order.status} 
+                      variant={getStatusVariant(order.status)}
+                      size="small"
+                    />
                   </View>
+                  <Text style={styles.orderTime}>
+                    {new Date(order.createdAt).toLocaleTimeString('es-ES', { 
+                      hour: '2-digit', 
+                      minute: '2-digit' 
+                    })}
+                  </Text>
                 </View>
-                <Text style={styles.customerName}>{order.user.name}</Text>
-                <Text style={styles.orderItems}>
-                  {order.items.length} producto{order.items.length > 1 ? 's' : ''}
-                </Text>
-                <Text style={styles.orderTotal}>${order.total.toFixed(2)}</Text>
-              </TouchableOpacity>
+                <View style={styles.orderBody}>
+                  <View style={styles.orderCustomer}>
+                    <Ionicons name="person-circle-outline" size={20} color={COLORS.textLight} />
+                    <Text style={styles.customerName}>{order.user.name}</Text>
+                  </View>
+                  <Text style={styles.orderItems}>
+                    {order.items.length} producto{order.items.length > 1 ? 's' : ''}
+                  </Text>
+                </View>
+                <View style={styles.orderFooter}>
+                  <Text style={styles.orderTotal}>${order.total.toFixed(2)}</Text>
+                  <TouchableOpacity style={styles.viewOrderButton}>
+                    <Text style={styles.viewOrderButtonText}>Ver detalles</Text>
+                    <Ionicons name="chevron-forward" size={16} color={COLORS.primary} />
+                  </TouchableOpacity>
+                </View>
+              </Card>
             ))}
           </View>
         )}
@@ -153,30 +246,47 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
-  header: {
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 24,
+  },
+  scrollContentDesktop: {
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: 1200,
+  },
+  headerGradient: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 80,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+  },
+  headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
-    paddingTop: 10,
   },
   greeting: {
     fontSize: 16,
-    color: COLORS.textLight,
+    color: COLORS.white,
+    opacity: 0.9,
+    marginBottom: 4,
   },
   storeName: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: COLORS.text,
-    marginTop: 4,
+    color: COLORS.white,
   },
-  storeStatus: {
+  storeStatusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.white,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   statusDot: {
     width: 8,
@@ -187,42 +297,30 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 14,
     fontWeight: '600',
-    color: COLORS.text,
+    color: COLORS.white,
+  },
+  statsSection: {
+    marginTop: -60,
+    paddingHorizontal: 20,
   },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    padding: 12,
+    marginHorizontal: -6,
+  },
+  statsGridDesktop: {
+    flexWrap: 'nowrap',
   },
   statCard: {
     width: '48%',
-    backgroundColor: COLORS.white,
-    borderRadius: 16,
-    padding: 16,
-    margin: '1%',
-    alignItems: 'center',
+    margin: 6,
   },
-  statIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: COLORS.text,
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: COLORS.textLight,
-    textAlign: 'center',
+  statCardDesktop: {
+    width: '23%',
   },
   section: {
-    padding: 20,
+    paddingHorizontal: 20,
+    marginTop: 24,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -231,70 +329,167 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: COLORS.text,
   },
-  seeAll: {
-    fontSize: 14,
-    color: COLORS.primary,
+  seeAllText: {
+    fontSize: 15,
     fontWeight: '600',
+    color: COLORS.primary,
   },
   actionsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    marginHorizontal: 0,
     marginTop: 12,
+  },
+  actionsGridDesktop: {
+    flexWrap: 'nowrap',
   },
   actionCard: {
     width: '48%',
+    margin: 8,
     backgroundColor: COLORS.white,
     borderRadius: 16,
     padding: 20,
-    margin: '1%',
     alignItems: 'center',
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  actionText: {
+  actionCardMobile: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginVertical: 6,
+    marginHorizontal: 0,
+  },
+  actionCardDesktop: {
+    width: '23%',
+  },
+  actionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  actionIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  actionTextContainer: {
+    marginLeft: 14,
+    flex: 1,
+  },
+  actionBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: COLORS.danger,
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+  },
+  actionBadgeText: {
+    color: COLORS.white,
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
+  actionLabel: {
     fontSize: 14,
-    color: COLORS.text,
-    marginTop: 12,
     fontWeight: '600',
+    color: COLORS.text,
     textAlign: 'center',
   },
+  actionLabelMobile: {
+    fontSize: 15,
+    textAlign: 'left',
+  },
+  actionSubtext: {
+    fontSize: 13,
+    color: COLORS.textLight,
+    marginTop: 2,
+  },
+  chevron: {
+    marginLeft: 8,
+    opacity: 0.5,
+  },
   orderCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: 12,
-    padding: 16,
     marginBottom: 12,
   },
   orderHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
+  },
+  orderHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   orderId: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: 'bold',
     color: COLORS.text,
   },
-  statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
+  orderTime: {
+    fontSize: 13,
+    color: COLORS.textLight,
+    fontWeight: '500',
+  },
+  orderBody: {
+    marginBottom: 12,
+  },
+  orderCustomer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 6,
   },
   customerName: {
-    fontSize: 14,
-    color: COLORS.text,
-    marginBottom: 4,
+    fontSize: 15,
+    color: COLORS.textSecondary,
+    fontWeight: '500',
   },
   orderItems: {
-    fontSize: 12,
+    fontSize: 13,
     color: COLORS.textLight,
-    marginBottom: 8,
+    marginLeft: 28,
+  },
+  orderFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.borderLight,
   },
   orderTotal: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: 'bold',
+    color: COLORS.primary,
+  },
+  viewOrderButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  viewOrderButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
     color: COLORS.primary,
   },
 });

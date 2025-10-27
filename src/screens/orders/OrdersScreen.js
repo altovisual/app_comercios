@@ -1,125 +1,230 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
+  ScrollView,
   TouchableOpacity,
   SafeAreaView,
+  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, ORDER_STATUS, ORDER_STATUS_LABELS } from '../../constants';
 import { useOrders } from '../../context/OrderContext';
+import { getDeviceType } from '../../utils/responsive';
+import { Card, Badge, Button, EmptyState } from '../../components';
 
 export default function OrdersScreen() {
   const { orders } = useOrders();
   const [filter, setFilter] = useState('all');
+  const [deviceType, setDeviceType] = useState(getDeviceType());
+
+  useEffect(() => {
+    const subscription = Dimensions.addEventListener('change', () => {
+      setDeviceType(getDeviceType());
+    });
+    return () => subscription?.remove();
+  }, []);
+
+  const isDesktop = deviceType === 'desktop';
+  const numColumns = isDesktop ? 2 : 1;
 
   const filters = [
-    { key: 'all', label: 'Todos' },
-    { key: ORDER_STATUS.PENDING, label: 'Pendientes' },
-    { key: ORDER_STATUS.PREPARING, label: 'Preparando' },
-    { key: ORDER_STATUS.READY, label: 'Listos' },
+    { key: 'all', label: 'Todos', icon: 'apps' },
+    { key: ORDER_STATUS.PENDING, label: 'Pendientes', icon: 'time' },
+    { key: ORDER_STATUS.PREPARING, label: 'Preparando', icon: 'restaurant' },
+    { key: ORDER_STATUS.READY, label: 'Listos', icon: 'checkmark-circle' },
   ];
 
   const filteredOrders = filter === 'all' 
     ? orders 
     : orders.filter(o => o.status === filter);
 
+  const getStatusVariant = (status) => {
+    const variants = {
+      [ORDER_STATUS.PENDING]: 'warning',
+      [ORDER_STATUS.ACCEPTED]: 'info',
+      [ORDER_STATUS.PREPARING]: 'warning',
+      [ORDER_STATUS.READY]: 'success',
+      [ORDER_STATUS.DELIVERED]: 'success',
+      [ORDER_STATUS.CANCELLED]: 'danger',
+    };
+    return variants[status] || 'neutral';
+  };
+
   const renderOrder = ({ item }) => (
-    <TouchableOpacity style={styles.orderCard}>
+    <Card style={[styles.orderCard, numColumns > 1 && styles.orderCardGrid]}>
+      {/* Header */}
       <View style={styles.orderHeader}>
-        <View>
-          <Text style={styles.orderId}>Pedido #{item.id.slice(-6)}</Text>
-          <Text style={styles.customerName}>{item.user.name}</Text>
+        <View style={styles.orderHeaderLeft}>
+          <View style={styles.orderIdContainer}>
+            <Ionicons name="receipt" size={18} color={COLORS.primary} />
+            <Text style={styles.orderId}>#{item.id.slice(-6)}</Text>
+          </View>
+          <Badge 
+            label={ORDER_STATUS_LABELS[item.status]} 
+            variant={getStatusVariant(item.status)}
+            size="small"
+          />
         </View>
-        <View style={[styles.statusBadge, { backgroundColor: COLORS[item.status] + '20' }]}>
-          <Text style={[styles.statusText, { color: COLORS[item.status] }]}>
-            {ORDER_STATUS_LABELS[item.status]}
-          </Text>
+        <Text style={styles.orderTime}>
+          {new Date(item.createdAt).toLocaleTimeString('es-ES', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          })}
+        </Text>
+      </View>
+
+      {/* Customer Info */}
+      <View style={styles.customerSection}>
+        <View style={styles.customerInfo}>
+          <View style={styles.customerAvatar}>
+            <Ionicons name="person" size={20} color={COLORS.primary} />
+          </View>
+          <View style={styles.customerDetails}>
+            <Text style={styles.customerName}>{item.user.name}</Text>
+            <Text style={styles.customerPhone}>{item.user.phone || 'Sin teléfono'}</Text>
+          </View>
         </View>
       </View>
 
-      <View style={styles.orderBody}>
+      {/* Items */}
+      <View style={styles.itemsSection}>
         <Text style={styles.itemsLabel}>Productos:</Text>
-        {item.items.map((product, index) => (
-          <Text key={index} style={styles.itemText}>
-            {product.quantity}x {product.name}
-          </Text>
+        {item.items.slice(0, 3).map((product, index) => (
+          <View key={index} style={styles.itemRow}>
+            <Text style={styles.itemQuantity}>{product.quantity}x</Text>
+            <Text style={styles.itemName}>{product.name}</Text>
+            <Text style={styles.itemPrice}>${(product.price * product.quantity).toFixed(2)}</Text>
+          </View>
         ))}
+        {item.items.length > 3 && (
+          <Text style={styles.moreItems}>+{item.items.length - 3} más...</Text>
+        )}
       </View>
 
+      {/* Footer */}
       <View style={styles.orderFooter}>
-        <View>
+        <View style={styles.totalSection}>
           <Text style={styles.totalLabel}>Total</Text>
           <Text style={styles.totalValue}>${item.total.toFixed(2)}</Text>
         </View>
         <View style={styles.actions}>
           {item.status === ORDER_STATUS.PENDING && (
             <>
-              <TouchableOpacity style={styles.acceptButton}>
-                <Text style={styles.acceptButtonText}>Aceptar</Text>
-              </TouchableOpacity>
+              <Button
+                title="Aceptar"
+                variant="success"
+                size="small"
+                onPress={() => {}}
+                style={styles.actionButton}
+              />
               <TouchableOpacity style={styles.rejectButton}>
                 <Ionicons name="close" size={20} color={COLORS.danger} />
               </TouchableOpacity>
             </>
           )}
           {item.status === ORDER_STATUS.ACCEPTED && (
-            <TouchableOpacity style={styles.actionButton}>
-              <Text style={styles.actionButtonText}>Iniciar Preparación</Text>
-            </TouchableOpacity>
+            <Button
+              title="Iniciar"
+              variant="primary"
+              size="small"
+              icon="play"
+              onPress={() => {}}
+              style={styles.actionButton}
+            />
           )}
           {item.status === ORDER_STATUS.PREPARING && (
-            <TouchableOpacity style={styles.actionButton}>
-              <Text style={styles.actionButtonText}>Marcar Listo</Text>
-            </TouchableOpacity>
+            <Button
+              title="Listo"
+              variant="success"
+              size="small"
+              icon="checkmark"
+              onPress={() => {}}
+              style={styles.actionButton}
+            />
+          )}
+          {item.status === ORDER_STATUS.READY && (
+            <Button
+              title="Ver detalles"
+              variant="outline"
+              size="small"
+              icon="eye"
+              onPress={() => {}}
+              style={styles.actionButton}
+            />
           )}
         </View>
       </View>
-    </TouchableOpacity>
+    </Card>
   );
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Pedidos</Text>
-      </View>
-
-      <View style={styles.filterContainer}>
-        {filters.map((f) => (
-          <TouchableOpacity
-            key={f.key}
-            style={[
-              styles.filterButton,
-              filter === f.key && styles.filterButtonActive,
-            ]}
-            onPress={() => setFilter(f.key)}
-          >
-            <Text
-              style={[
-                styles.filterText,
-                filter === f.key && styles.filterTextActive,
-              ]}
-            >
-              {f.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <FlatList
-        data={filteredOrders}
-        renderItem={renderOrder}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Ionicons name="receipt-outline" size={64} color={COLORS.textLight} />
-            <Text style={styles.emptyText}>No hay pedidos</Text>
+      <View style={[styles.contentWrapper, isDesktop && styles.contentWrapperDesktop]}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.title}>Pedidos</Text>
+            <Text style={styles.subtitle}>{filteredOrders.length} pedido{filteredOrders.length !== 1 ? 's' : ''}</Text>
           </View>
-        }
-      />
+        </View>
+
+        {/* Filters */}
+        <View style={styles.filterContainer}>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filterScroll}
+          >
+            {filters.map((f) => (
+              <TouchableOpacity
+                key={f.key}
+                style={[
+                  styles.filterButton,
+                  filter === f.key && styles.filterButtonActive,
+                ]}
+                onPress={() => setFilter(f.key)}
+                activeOpacity={0.7}
+              >
+                <Ionicons 
+                  name={f.icon} 
+                  size={18} 
+                  color={filter === f.key ? COLORS.white : COLORS.textSecondary}
+                  style={styles.filterIcon}
+                />
+                <Text
+                  style={[
+                    styles.filterText,
+                    filter === f.key && styles.filterTextActive,
+                  ]}
+                >
+                  {f.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* Orders List */}
+        <FlatList
+          data={filteredOrders}
+          renderItem={renderOrder}
+          keyExtractor={(item) => item.id}
+          key={numColumns}
+          numColumns={numColumns}
+          contentContainerStyle={styles.list}
+          columnWrapperStyle={numColumns > 1 ? styles.columnWrapper : null}
+          ListEmptyComponent={
+            <EmptyState
+              icon="receipt-outline"
+              title="No hay pedidos"
+              description="Los pedidos aparecerán aquí cuando los clientes realicen compras"
+            />
+          }
+        />
+      </View>
     </SafeAreaView>
   );
 }
@@ -129,33 +234,63 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
+  contentWrapper: {
+    flex: 1,
+  },
+  contentWrapperDesktop: {
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: 1200,
+  },
   header: {
-    padding: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
     paddingTop: 10,
+    paddingBottom: 16,
   },
   title: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
     color: COLORS.text,
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: COLORS.textLight,
+    fontWeight: '500',
   },
   filterContainer: {
-    flexDirection: 'row',
+    paddingBottom: 16,
+  },
+  filterScroll: {
     paddingHorizontal: 20,
-    marginBottom: 16,
+    gap: 8,
   },
   filterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingVertical: 10,
+    borderRadius: 12,
     backgroundColor: COLORS.white,
     marginRight: 8,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   filterButtonActive: {
     backgroundColor: COLORS.primary,
   },
+  filterIcon: {
+    marginRight: 6,
+  },
   filterText: {
     fontSize: 14,
-    color: COLORS.text,
+    color: COLORS.textSecondary,
     fontWeight: '600',
   },
   filterTextActive: {
@@ -165,11 +300,15 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 0,
   },
+  columnWrapper: {
+    justifyContent: 'space-between',
+    gap: 16,
+  },
   orderCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: 16,
-    padding: 16,
     marginBottom: 16,
+  },
+  orderCardGrid: {
+    flex: 1,
   },
   orderHeader: {
     flexDirection: 'row',
@@ -177,99 +316,130 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 16,
   },
+  orderHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  orderIdContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   orderId: {
     fontSize: 18,
     fontWeight: 'bold',
     color: COLORS.text,
-    marginBottom: 4,
   },
-  customerName: {
-    fontSize: 14,
+  orderTime: {
+    fontSize: 13,
     color: COLORS.textLight,
+    fontWeight: '500',
   },
-  statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  orderBody: {
+  customerSection: {
     marginBottom: 16,
   },
+  customerInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  customerAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: COLORS.primary + '15',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  customerDetails: {
+    flex: 1,
+  },
+  customerName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginBottom: 2,
+  },
+  customerPhone: {
+    fontSize: 13,
+    color: COLORS.textLight,
+  },
+  itemsSection: {
+    marginBottom: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.borderLight,
+  },
   itemsLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORS.textLight,
+    marginBottom: 8,
+    textTransform: 'uppercase',
+  },
+  itemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  itemQuantity: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.primary,
+    width: 30,
+  },
+  itemName: {
+    flex: 1,
+    fontSize: 14,
+    color: COLORS.textSecondary,
+  },
+  itemPrice: {
     fontSize: 14,
     fontWeight: '600',
     color: COLORS.text,
-    marginBottom: 8,
   },
-  itemText: {
-    fontSize: 14,
+  moreItems: {
+    fontSize: 13,
     color: COLORS.textLight,
-    marginBottom: 4,
+    fontStyle: 'italic',
+    marginTop: 4,
   },
   orderFooter: {
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.borderLight,
+  },
+  totalSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    paddingTop: 16,
+    marginBottom: 12,
   },
   totalLabel: {
-    fontSize: 12,
+    fontSize: 14,
     color: COLORS.textLight,
-    marginBottom: 4,
+    fontWeight: '500',
   },
   totalValue: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: COLORS.text,
+    color: COLORS.primary,
   },
   actions: {
     flexDirection: 'row',
-  },
-  acceptButton: {
-    backgroundColor: COLORS.success,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-    marginRight: 8,
-  },
-  acceptButtonText: {
-    color: COLORS.white,
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  rejectButton: {
-    backgroundColor: COLORS.danger + '20',
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+    gap: 8,
   },
   actionButton: {
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
+    flex: 1,
   },
-  actionButtonText: {
-    color: COLORS.white,
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  emptyContainer: {
-    alignItems: 'center',
+  rejectButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: COLORS.danger + '15',
     justifyContent: 'center',
-    paddingVertical: 60,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: COLORS.textLight,
-    marginTop: 16,
+    alignItems: 'center',
   },
 });
