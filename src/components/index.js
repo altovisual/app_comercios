@@ -6,3 +6,4 @@ export { default as StatCard } from './StatCard';
 export { default as EmptyState } from './EmptyState';
 export { default as ProductModal } from './ProductModal';
 export { default as DriverAssignModal } from './DriverAssignModal';
+export { default as RejectOrderModal } from './RejectOrderModal';

@@ -7,14 +7,17 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS } from '../constants';
 import { Input, Button } from './';
 
 const EMOJI_OPTIONS = ['🍔', '🍕', '🌮', '🍱', '🥗', '🍟', '🥤', '🍰', '🍜', '🥙', '🌭', '🍗'];
 
 export default function ProductModal({ visible, onClose, onSave, product }) {
+  const insets = useSafeAreaInsets();
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -162,7 +165,10 @@ export default function ProductModal({ visible, onClose, onSave, product }) {
           </ScrollView>
 
           {/* Footer */}
-          <View style={styles.footer}>
+          <View style={[
+            styles.footer,
+            { paddingBottom: Math.max(insets.bottom, 20) }
+          ]}>
             <TouchableOpacity 
               style={styles.cancelButton}
               onPress={onClose}
@@ -176,7 +182,7 @@ export default function ProductModal({ visible, onClose, onSave, product }) {
               activeOpacity={0.7}
             >
               <Text style={styles.saveButtonText}>
-                {product ? 'Guardar Cambios' : 'Agregar Producto'}
+                {product ? 'Actualizar' : 'Guardar'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -264,8 +270,7 @@ const styles = StyleSheet.create({
   footer: {
     flexDirection: 'row',
     paddingHorizontal: 24,
-    paddingVertical: 20,
-    paddingBottom: 28,
+    paddingTop: 20,
     gap: 12,
     borderTopWidth: 1,
     borderTopColor: COLORS.borderLight,

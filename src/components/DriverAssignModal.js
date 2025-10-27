@@ -7,8 +7,10 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS } from '../constants';
 import { Input } from './';
 
@@ -44,6 +46,7 @@ const AVAILABLE_DRIVERS = [
 ];
 
 export default function DriverAssignModal({ visible, onClose, onAssign, orderInfo }) {
+  const insets = useSafeAreaInsets();
   const [selectedDriver, setSelectedDriver] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -180,7 +183,10 @@ export default function DriverAssignModal({ visible, onClose, onAssign, orderInf
           </ScrollView>
 
           {/* Footer */}
-          <View style={styles.footer}>
+          <View style={[
+            styles.footer,
+            { paddingBottom: Math.max(insets.bottom, 20) }
+          ]}>
             <TouchableOpacity 
               style={styles.cancelButton}
               onPress={onClose}
@@ -341,8 +347,7 @@ const styles = StyleSheet.create({
   footer: {
     flexDirection: 'row',
     paddingHorizontal: 24,
-    paddingVertical: 20,
-    paddingBottom: 28,
+    paddingTop: 20,
     gap: 12,
     borderTopWidth: 1,
     borderTopColor: COLORS.borderLight,

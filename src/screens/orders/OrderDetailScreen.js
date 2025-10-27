@@ -5,18 +5,18 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, ORDER_STATUS, ORDER_STATUS_LABELS } from '../../constants';
 import { useOrders } from '../../context/OrderContext';
-import { Card, Badge, DriverAssignModal } from '../../components';
+import { Card, Badge, RejectOrderModal } from '../../components';
 
 export default function OrderDetailScreen({ route, navigation }) {
   const { orderId } = route.params;
   const { orders, acceptOrder, startPreparing, markReady, cancelOrder, handOverToDriver, markDelivered, updateDriverStatus } = useOrders();
-  const [showDriverModal, setShowDriverModal] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
   
   const order = orders.find(o => o.id === orderId);
 
@@ -64,9 +64,8 @@ export default function OrderDetailScreen({ route, navigation }) {
       case 'ready':
         markReady(order.id);
         break;
-      case 'cancel':
-        cancelOrder(order.id);
-        navigation.goBack();
+      case 'reject':
+        setShowRejectModal(true);
         break;
       case 'handover':
         Alert.alert(
@@ -89,6 +88,20 @@ export default function OrderDetailScreen({ route, navigation }) {
         );
         break;
     }
+  };
+
+  const handleRejectOrder = (rejectInfo) => {
+    cancelOrder(order.id, rejectInfo);
+    Alert.alert(
+      'Pedido Rechazado',
+      `El pedido ha sido rechazado.\n\nEl cliente y ${order.driver?.name || 'el repartidor'} han sido notificados.`,
+      [
+        { 
+          text: 'OK', 
+          onPress: () => navigation.goBack() 
+        }
+      ]
+    );
   };
 
   return (
@@ -275,7 +288,7 @@ export default function OrderDetailScreen({ route, navigation }) {
             <>
               <TouchableOpacity 
                 style={styles.rejectButton}
-                onPress={() => handleAction('cancel')}
+                onPress={() => handleAction('reject')}
                 activeOpacity={0.7}
               >
                 <Ionicons name="close-circle" size={22} color={COLORS.danger} />
@@ -339,6 +352,17 @@ export default function OrderDetailScreen({ route, navigation }) {
           </TouchableOpacity>
         </View>
       )}
+
+      {/* Reject Order Modal */}
+      <RejectOrderModal
+        visible={showRejectModal}
+        onClose={() => setShowRejectModal(false)}
+        onReject={handleRejectOrder}
+        orderInfo={{
+          orderId: order.id.slice(-6),
+          total: order.total,
+        }}
+      />
     </SafeAreaView>
   );
 }

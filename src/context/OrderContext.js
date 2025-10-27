@@ -180,8 +180,28 @@ export const OrderProvider = ({ children }) => {
     updateOrderStatus(orderId, ORDER_STATUS.READY);
   };
 
-  const cancelOrder = (orderId) => {
-    updateOrderStatus(orderId, ORDER_STATUS.CANCELLED);
+  const cancelOrder = (orderId, rejectInfo = null) => {
+    setOrders(prevOrders =>
+      prevOrders.map(order =>
+        order.id === orderId
+          ? { 
+              ...order, 
+              status: ORDER_STATUS.CANCELLED,
+              cancelledAt: new Date().toISOString(),
+              rejectInfo: rejectInfo || {
+                reasonId: 'merchant_cancelled',
+                reasonLabel: 'Cancelado por el comercio',
+                timestamp: new Date().toISOString(),
+              },
+              // Liberar repartidor
+              driver: order.driver ? {
+                ...order.driver,
+                status: 'freed', // Repartidor liberado
+              } : null,
+            }
+          : order
+      )
+    );
   };
 
   const handOverToDriver = (orderId) => {

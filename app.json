@@ -23,7 +23,13 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FF6B35"
       },
-      "package": "com.mototaxi.merchant"
+      "package": "com.mototaxi.merchant",
+      "softwareKeyboardLayoutMode": "pan",
+      "navigationBar": {
+        "visible": "immersive",
+        "barStyle": "light-content",
+        "backgroundColor": "#ffffff"
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"

@@ -6,19 +6,21 @@ import {
   FlatList,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   Dimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, ORDER_STATUS, ORDER_STATUS_LABELS } from '../../constants';
 import { useOrders } from '../../context/OrderContext';
 import { getDeviceType } from '../../utils/responsive';
-import { Card, Badge, Button, EmptyState } from '../../components';
+import { Card, Badge, Button, EmptyState, RejectOrderModal } from '../../components';
 
 export default function OrdersScreen({ navigation }) {
   const { orders, acceptOrder, startPreparing, markReady, cancelOrder } = useOrders();
   const [filter, setFilter] = useState('all');
   const [deviceType, setDeviceType] = useState(getDeviceType());
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [selectedOrderForReject, setSelectedOrderForReject] = useState(null);
 
   useEffect(() => {
     const subscription = Dimensions.addEventListener('change', () => {
@@ -51,6 +53,13 @@ export default function OrdersScreen({ navigation }) {
       [ORDER_STATUS.CANCELLED]: 'danger',
     };
     return variants[status] || 'neutral';
+  };
+
+  const handleRejectOrder = (rejectInfo) => {
+    if (selectedOrderForReject) {
+      cancelOrder(selectedOrderForReject.id, rejectInfo);
+      setSelectedOrderForReject(null);
+    }
   };
 
   const renderOrder = ({ item }) => (
@@ -126,7 +135,10 @@ export default function OrdersScreen({ navigation }) {
               />
               <TouchableOpacity 
                 style={styles.rejectButton}
-                onPress={() => cancelOrder(item.id)}
+                onPress={() => {
+                  setSelectedOrderForReject(item);
+                  setShowRejectModal(true);
+                }}
               >
                 <Ionicons name="close" size={20} color={COLORS.danger} />
               </TouchableOpacity>
@@ -233,6 +245,22 @@ export default function OrdersScreen({ navigation }) {
           }
         />
       </View>
+
+      {/* Reject Order Modal */}
+      {selectedOrderForReject && (
+        <RejectOrderModal
+          visible={showRejectModal}
+          onClose={() => {
+            setShowRejectModal(false);
+            setSelectedOrderForReject(null);
+          }}
+          onReject={handleRejectOrder}
+          orderInfo={{
+            orderId: selectedOrderForReject.id.slice(-6),
+            total: selectedOrderForReject.total,
+          }}
+        />
+      )}
     </SafeAreaView>
   );
 }
