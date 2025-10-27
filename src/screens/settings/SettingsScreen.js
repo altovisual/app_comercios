@@ -16,7 +16,7 @@ import { useAuth } from '../../context/AuthContext';
 import { getDeviceType } from '../../utils/responsive';
 import { Card } from '../../components';
 
-export default function SettingsScreen() {
+export default function SettingsScreen({ navigation }) {
   const { store, logout, updateStore } = useAuth();
   const [deviceType, setDeviceType] = useState(getDeviceType());
 
@@ -48,25 +48,25 @@ export default function SettingsScreen() {
     {
       title: 'Comercio',
       items: [
-        { icon: 'storefront-outline', label: 'Información del Comercio', onPress: () => {}, color: COLORS.primary },
-        { icon: 'time-outline', label: 'Horarios de Operación', onPress: () => {}, color: COLORS.info },
-        { icon: 'location-outline', label: 'Zona de Entrega', onPress: () => {}, color: COLORS.success },
+        { icon: 'storefront-outline', label: 'Información del Comercio', onPress: () => navigation.navigate('StoreInfo'), color: COLORS.primary },
+        { icon: 'time-outline', label: 'Horarios de Operación', onPress: () => navigation.navigate('OperatingHours'), color: COLORS.info },
+        { icon: 'location-outline', label: 'Zona de Entrega', onPress: () => navigation.navigate('DeliveryZone'), color: COLORS.success },
       ],
     },
     {
       title: 'Configuración',
       items: [
-        { icon: 'notifications-outline', label: 'Notificaciones', onPress: () => {}, color: COLORS.warning },
-        { icon: 'card-outline', label: 'Métodos de Pago', onPress: () => {}, color: COLORS.secondary },
-        { icon: 'receipt-outline', label: 'Facturación', onPress: () => {}, color: COLORS.info },
+        { icon: 'notifications-outline', label: 'Notificaciones', onPress: () => navigation.navigate('Notifications'), color: COLORS.warning },
+        { icon: 'card-outline', label: 'Métodos de Pago', onPress: () => navigation.navigate('PaymentMethods'), color: COLORS.secondary },
+        { icon: 'receipt-outline', label: 'Facturación', onPress: () => Alert.alert('Próximamente', 'Esta función estará disponible pronto'), color: COLORS.info },
       ],
     },
     {
       title: 'Ayuda',
       items: [
-        { icon: 'help-circle-outline', label: 'Centro de Ayuda', onPress: () => {}, color: COLORS.primary },
-        { icon: 'call-outline', label: 'Contactar Soporte', onPress: () => {}, color: COLORS.success },
-        { icon: 'document-text-outline', label: 'Términos y Condiciones', onPress: () => {}, color: COLORS.textLight },
+        { icon: 'help-circle-outline', label: 'Centro de Ayuda', onPress: () => navigation.navigate('HelpCenter'), color: COLORS.primary },
+        { icon: 'call-outline', label: 'Contactar Soporte', onPress: () => Alert.alert('Soporte', 'Contacta con nosotros en soporte@delivery.com'), color: COLORS.success },
+        { icon: 'document-text-outline', label: 'Términos y Condiciones', onPress: () => Alert.alert('Términos', 'Versión 1.0 - 2025'), color: COLORS.textLight },
       ],
     },
   ];

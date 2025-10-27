@@ -9,7 +9,7 @@ import HomeScreen from '../screens/home/HomeScreen';
 import OrdersNavigator from './OrdersNavigator';
 import ProductsNavigator from './ProductsNavigator';
 import StatsScreen from '../screens/stats/StatsScreen';
-import SettingsScreen from '../screens/settings/SettingsScreen';
+import SettingsNavigator from './SettingsNavigator';
 
 const Tab = createBottomTabNavigator();
 
@@ -86,7 +86,7 @@ export default function TabNavigator() {
       />
       <Tab.Screen 
         name="Settings" 
-        component={SettingsScreen}
+        component={SettingsNavigator}
         options={{ tabBarLabel: 'Ajustes' }}
       />
     </Tab.Navigator>
