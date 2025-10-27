@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, ORDER_STATUS, ORDER_STATUS_LABELS } from '../../constants';
 import { useOrders } from '../../context/OrderContext';
@@ -15,6 +15,7 @@ import { Card, Badge, RejectOrderModal } from '../../components';
 
 export default function OrderDetailScreen({ route, navigation }) {
   const { orderId } = route.params;
+  const insets = useSafeAreaInsets();
   const { orders, acceptOrder, startPreparing, markReady, cancelOrder, handOverToDriver, markDelivered, updateDriverStatus } = useOrders();
   const [showRejectModal, setShowRejectModal] = useState(false);
   
@@ -121,6 +122,7 @@ export default function OrderDetailScreen({ route, navigation }) {
 
       <ScrollView 
         style={styles.content} 
+        contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
         bounces={false}
       >
@@ -283,7 +285,7 @@ export default function OrderDetailScreen({ route, navigation }) {
 
       {/* Action Buttons */}
       {order.status !== ORDER_STATUS.DELIVERED && order.status !== ORDER_STATUS.CANCELLED && (
-        <View style={styles.footer}>
+        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom + 16, 28) }]}>
           {order.status === ORDER_STATUS.PENDING && (
             <>
               <TouchableOpacity 
@@ -339,7 +341,7 @@ export default function OrderDetailScreen({ route, navigation }) {
 
       {/* Driver Info for PICKED_UP status */}
       {order.status === ORDER_STATUS.PICKED_UP && order.driver && (
-        <View style={styles.driverInfoFooter}>
+        <View style={[styles.driverInfoFooter, { paddingBottom: Math.max(insets.bottom + 16, 28) }]}>
           <View style={styles.driverInfoContent}>
             <Ionicons name="bicycle" size={24} color={COLORS.success} />
             <View style={styles.driverInfoText}>
@@ -654,18 +656,16 @@ const styles = StyleSheet.create({
     color: COLORS.text,
   },
   footer: {
+    position: 'absolute',
+    bottom: 60,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     padding: 16,
-    paddingBottom: 28,
+    gap: 12,
     backgroundColor: COLORS.white,
     borderTopWidth: 1,
     borderTopColor: COLORS.borderLight,
-    gap: 12,
-    shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 8,
   },
   rejectButton: {
     flex: 1,
@@ -745,6 +745,10 @@ const styles = StyleSheet.create({
     color: COLORS.white,
   },
   driverInfoFooter: {
+    position: 'absolute',
+    bottom: 60,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
