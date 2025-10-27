@@ -7,6 +7,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Dimensions,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,6 +20,7 @@ export default function OrdersScreen({ navigation }) {
   const { orders, acceptOrder, startPreparing, markReady, cancelOrder } = useOrders();
   const [filter, setFilter] = useState('all');
   const [deviceType, setDeviceType] = useState(getDeviceType());
+  const [refreshing, setRefreshing] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [selectedOrderForReject, setSelectedOrderForReject] = useState(null);
 
@@ -28,6 +30,12 @@ export default function OrdersScreen({ navigation }) {
     });
     return () => subscription?.remove();
   }, []);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    // Los datos se actualizan automáticamente por el listener en tiempo real
+    setTimeout(() => setRefreshing(false), 1000);
+  };
 
   const isDesktop = deviceType === 'desktop';
   const numColumns = isDesktop ? 2 : 1;
@@ -236,6 +244,14 @@ export default function OrdersScreen({ navigation }) {
           numColumns={numColumns}
           contentContainerStyle={styles.list}
           columnWrapperStyle={numColumns > 1 ? styles.columnWrapper : null}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[COLORS.primary]}
+              tintColor={COLORS.primary}
+            />
+          }
           ListEmptyComponent={
             <EmptyState
               icon="receipt-outline"

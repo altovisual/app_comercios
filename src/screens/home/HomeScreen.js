@@ -9,6 +9,7 @@ import {
   Dimensions,
   Animated,
   Alert,
+  RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -26,6 +27,7 @@ export default function HomeScreen({ navigation }) {
   const { store, updateStore } = useAuth();
   const { orders, activeOrders, pendingCount } = useOrders();
   const [deviceType, setDeviceType] = useState(getDeviceType());
+  const [refreshing, setRefreshing] = useState(false);
   const scrollY = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -36,6 +38,13 @@ export default function HomeScreen({ navigation }) {
   }, []);
 
   const isDesktop = deviceType === 'desktop';
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    // Los datos se actualizan automáticamente por los listeners en tiempo real
+    setTimeout(() => setRefreshing(false), 1000);
+  };
+
   const isTablet = deviceType === 'tablet';
 
   const todayOrders = orders.filter(o => {
@@ -142,6 +151,15 @@ export default function HomeScreen({ navigation }) {
           { useNativeDriver: false }
         )}
         bounces={true}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[COLORS.primary]}
+            tintColor={COLORS.primary}
+            progressViewOffset={HEADER_MAX_HEIGHT - 1}
+          />
+        }
       >
         {/* Spacer para el header */}
         <View style={{ height: HEADER_MAX_HEIGHT + 10 }} />

@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,6 +24,7 @@ export default function ProductsScreen({ navigation }) {
   const { store } = useAuth();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (!store?.id) return;
@@ -29,10 +32,17 @@ export default function ProductsScreen({ navigation }) {
     const unsubscribe = subscribeToStoreProducts(store.id, (productsData) => {
       setProducts(productsData);
       setLoading(false);
+      setRefreshing(false);
     });
 
     return () => unsubscribe();
   }, [store?.id]);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    // Los datos se actualizarán automáticamente por el listener en tiempo real
+    setTimeout(() => setRefreshing(false), 1000);
+  };
 
   const handleDeleteProduct = (productId, productName) => {
     Alert.alert(
@@ -179,6 +189,14 @@ export default function ProductsScreen({ navigation }) {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[COLORS.primary]}
+              tintColor={COLORS.primary}
+            />
+          }
         />
       )}
     </SafeAreaView>

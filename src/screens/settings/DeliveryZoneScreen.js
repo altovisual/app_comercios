@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-    paddingBottom: 100,
+    paddingBottom: 180,
   },
   infoCard: {
     flexDirection: 'row',
@@ -261,12 +261,21 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   footer: {
+    position: 'absolute',
+    bottom: 60,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     padding: 16,
     gap: 12,
     backgroundColor: COLORS.white,
     borderTopWidth: 1,
     borderTopColor: COLORS.borderLight,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 8,
   },
   cancelButton: {
     flex: 1,

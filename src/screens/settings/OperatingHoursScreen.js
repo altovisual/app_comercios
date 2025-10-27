@@ -7,6 +7,12 @@ import {
   TouchableOpacity,
   Switch,
   Alert,
+  Modal,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,6 +32,10 @@ const DAYS = [
 export default function OperatingHoursScreen({ navigation }) {
   const { store, updateStore } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editingDay, setEditingDay] = useState(null);
+  const [editingType, setEditingType] = useState('start'); // 'start' o 'end'
+  const [tempTime, setTempTime] = useState('');
   const [hours, setHours] = useState(
     store?.operatingHours || {
       monday: { open: true, start: '09:00', end: '22:00' },
@@ -43,6 +53,31 @@ export default function OperatingHoursScreen({ navigation }) {
       ...hours,
       [day]: { ...hours[day], open: !hours[day].open },
     });
+  };
+
+  const openTimeEditor = (day, type) => {
+    setEditingDay(day);
+    setEditingType(type);
+    setTempTime(hours[day][type]);
+    setModalVisible(true);
+  };
+
+  const saveTime = () => {
+    // Validar formato HH:MM
+    const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    if (!timeRegex.test(tempTime)) {
+      Alert.alert('Error', 'Formato de hora inválido. Use HH:MM (ej: 09:00)');
+      return;
+    }
+
+    setHours({
+      ...hours,
+      [editingDay]: {
+        ...hours[editingDay],
+        [editingType]: tempTime,
+      },
+    });
+    setModalVisible(false);
   };
 
   const handleSave = async () => {
@@ -92,15 +127,25 @@ export default function OperatingHoursScreen({ navigation }) {
             </View>
             {hours[day.key]?.open && (
               <View style={styles.timeContainer}>
-                <View style={styles.timeBox}>
+                <TouchableOpacity
+                  style={styles.timeBox}
+                  onPress={() => openTimeEditor(day.key, 'start')}
+                  activeOpacity={0.7}
+                >
                   <Text style={styles.timeLabel}>Apertura</Text>
                   <Text style={styles.timeValue}>{hours[day.key].start}</Text>
-                </View>
+                  <Ionicons name="create-outline" size={16} color={COLORS.primary} style={styles.editIcon} />
+                </TouchableOpacity>
                 <Ionicons name="arrow-forward" size={20} color={COLORS.textLight} />
-                <View style={styles.timeBox}>
+                <TouchableOpacity
+                  style={styles.timeBox}
+                  onPress={() => openTimeEditor(day.key, 'end')}
+                  activeOpacity={0.7}
+                >
                   <Text style={styles.timeLabel}>Cierre</Text>
                   <Text style={styles.timeValue}>{hours[day.key].end}</Text>
-                </View>
+                  <Ionicons name="create-outline" size={16} color={COLORS.primary} style={styles.editIcon} />
+                </TouchableOpacity>
               </View>
             )}
           </View>
@@ -124,6 +169,68 @@ export default function OperatingHoursScreen({ navigation }) {
           </Text>
         </TouchableOpacity>
       </View>
+
+      {/* Modal para editar hora */}
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={styles.modalOverlay}>
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              style={styles.keyboardView}
+            >
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>
+                  {editingType === 'start' ? 'Hora de Apertura' : 'Hora de Cierre'}
+                </Text>
+                
+                <Text style={styles.modalLabel}>Ingrese la hora (HH:MM)</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="09:00"
+                  value={tempTime}
+                  onChangeText={setTempTime}
+                  keyboardType="numbers-and-punctuation"
+                  maxLength={5}
+                  autoFocus
+                  returnKeyType="done"
+                  onSubmitEditing={() => {
+                    Keyboard.dismiss();
+                    saveTime();
+                  }}
+                />
+                
+                <Text style={styles.modalHint}>Formato: 24 horas (ej: 09:00, 14:30, 22:00)</Text>
+
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    style={styles.modalCancelButton}
+                    onPress={() => {
+                      Keyboard.dismiss();
+                      setModalVisible(false);
+                    }}
+                  >
+                    <Text style={styles.modalCancelText}>Cancelar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.modalSaveButton}
+                    onPress={() => {
+                      Keyboard.dismiss();
+                      saveTime();
+                    }}
+                  >
+                    <Text style={styles.modalSaveText}>Guardar</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </KeyboardAvoidingView>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -162,7 +269,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-    paddingBottom: 100,
+    paddingBottom: 180,
   },
   description: {
     fontSize: 14,
@@ -212,12 +319,21 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
   },
   footer: {
+    position: 'absolute',
+    bottom: 60,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     padding: 16,
     gap: 12,
     backgroundColor: COLORS.white,
     borderTopWidth: 1,
     borderTopColor: COLORS.borderLight,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 8,
   },
   cancelButton: {
     flex: 1,
@@ -245,6 +361,84 @@ const styles = StyleSheet.create({
   saveButtonText: {
     fontSize: 16,
     fontWeight: '700',
+    color: COLORS.white,
+  },
+  editIcon: {
+    marginTop: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  keyboardView: {
+    width: '85%',
+    maxWidth: 400,
+  },
+  modalContent: {
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    padding: 24,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: COLORS.text,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  modalLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginBottom: 8,
+  },
+  modalInput: {
+    backgroundColor: COLORS.background,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  modalHint: {
+    fontSize: 12,
+    color: COLORS.textLight,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modalCancelButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: COLORS.borderLight,
+    alignItems: 'center',
+  },
+  modalCancelText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.text,
+  },
+  modalSaveButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: COLORS.primary,
+    alignItems: 'center',
+  },
+  modalSaveText: {
+    fontSize: 16,
+    fontWeight: '600',
     color: COLORS.white,
   },
 });
