@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Dimensions,
+  Animated,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -16,10 +18,15 @@ import { useOrders } from '../../context/OrderContext';
 import { getDeviceType } from '../../utils/responsive';
 import { Card, StatCard, Badge } from '../../components';
 
+const HEADER_MAX_HEIGHT = 170;
+const HEADER_MIN_HEIGHT = 80;
+const HEADER_SCROLL_DISTANCE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
+
 export default function HomeScreen({ navigation }) {
-  const { store } = useAuth();
+  const { store, updateStore } = useAuth();
   const { orders, activeOrders, pendingCount } = useOrders();
   const [deviceType, setDeviceType] = useState(getDeviceType());
+  const scrollY = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const subscription = Dimensions.addEventListener('change', () => {
@@ -83,34 +90,61 @@ export default function HomeScreen({ navigation }) {
     return variants[status] || 'neutral';
   };
 
+  const handleToggleStoreStatus = async () => {
+    const newStatus = !store?.isOpen;
+    await updateStore({ isOpen: newStatus });
+    Alert.alert(
+      newStatus ? '¡Local Abierto!' : 'Local Cerrado',
+      newStatus 
+        ? 'Tu local ahora está abierto y puede recibir pedidos.'
+        : 'Tu local está cerrado. No recibirás nuevos pedidos.',
+      [{ text: 'OK' }]
+    );
+  };
+
+  const handleNotifications = () => {
+    navigation.navigate('Orders');
+  };
+
+  // Animaciones del header
+  const headerTranslateY = scrollY.interpolate({
+    inputRange: [0, HEADER_SCROLL_DISTANCE],
+    outputRange: [0, -(HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT)],
+    extrapolate: 'clamp',
+  });
+
+  const headerOpacity = scrollY.interpolate({
+    inputRange: [0, HEADER_SCROLL_DISTANCE / 2, HEADER_SCROLL_DISTANCE],
+    outputRange: [1, 0.7, 0],
+    extrapolate: 'clamp',
+  });
+
+  const headerTitleOpacity = scrollY.interpolate({
+    inputRange: [0, HEADER_SCROLL_DISTANCE / 2, HEADER_SCROLL_DISTANCE],
+    outputRange: [0, 0, 1],
+    extrapolate: 'clamp',
+  });
+
+  const headerScale = scrollY.interpolate({
+    inputRange: [-50, 0],
+    outputRange: [1.05, 1],
+    extrapolate: 'clamp',
+  });
+
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView 
+    <View style={styles.container}>
+      <Animated.ScrollView 
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scrollContent, isDesktop && styles.scrollContentDesktop]}
+        scrollEventThrottle={16}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: false }
+        )}
+        bounces={true}
       >
-        {/* Header con gradiente */}
-        <LinearGradient
-          colors={[COLORS.primary, COLORS.primaryDark]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.headerGradient}
-        >
-          <View style={styles.headerContent}>
-            <View>
-              <Text style={styles.greeting}>Hola 👋</Text>
-              <Text style={styles.storeName}>{store?.name || 'Mi Comercio'}</Text>
-            </View>
-            <TouchableOpacity style={styles.storeStatusBadge}>
-              <View style={[styles.statusDot, { 
-                backgroundColor: store?.isOpen ? COLORS.success : COLORS.danger 
-              }]} />
-              <Text style={styles.statusText}>
-                {store?.isOpen ? 'Abierto' : 'Cerrado'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </LinearGradient>
+        {/* Spacer para el header */}
+        <View style={{ height: HEADER_MAX_HEIGHT + 10 }} />
 
         {/* Stats Cards */}
         <View style={styles.statsSection}>
@@ -242,8 +276,91 @@ export default function HomeScreen({ navigation }) {
             ))}
           </View>
         )}
-      </ScrollView>
-    </SafeAreaView>
+      </Animated.ScrollView>
+
+      {/* Header Animado */}
+      <Animated.View
+        style={[
+          styles.headerAnimated,
+          {
+            transform: [
+              { translateY: headerTranslateY },
+              { scale: headerScale }
+            ],
+          },
+        ]}
+      >
+        <LinearGradient
+          colors={[COLORS.primary, COLORS.primaryDark]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.headerGradient}
+        >
+          <SafeAreaView style={styles.headerSafeArea}>
+            {/* Header expandido */}
+            <Animated.View style={[styles.headerExpanded, { opacity: headerOpacity }]}>
+              <View style={styles.headerTop}>
+                <View style={styles.headerLeft}>
+                  <View style={styles.storeIconContainer}>
+                    <Ionicons name="storefront" size={24} color={COLORS.white} />
+                  </View>
+                  <View style={styles.storeInfo}>
+                    <Text style={styles.greeting}>¡Hola!</Text>
+                    <Text style={styles.storeName} numberOfLines={1}>{store?.name || 'Mi Comercio'}</Text>
+                  </View>
+                </View>
+                <TouchableOpacity 
+                  style={styles.notificationButton}
+                  onPress={handleNotifications}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="notifications" size={22} color={COLORS.white} />
+                  {pendingCount > 0 && (
+                    <View style={styles.notificationBadge}>
+                      <Text style={styles.notificationBadgeText}>{pendingCount}</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              </View>
+              
+              {/* Status bar */}
+              <TouchableOpacity 
+                style={styles.statusBar}
+                onPress={handleToggleStoreStatus}
+                activeOpacity={0.7}
+              >
+                <View style={styles.statusItem}>
+                  <View style={[styles.statusIndicator, { 
+                    backgroundColor: store?.isOpen ? '#4CAF50' : '#F44336' 
+                  }]} />
+                  <Text style={styles.statusLabel}>
+                    {store?.isOpen ? 'Abierto ahora' : 'Cerrado'}
+                  </Text>
+                </View>
+                <View style={styles.statusDivider} />
+                <View style={styles.statusItem}>
+                  <Ionicons name="time-outline" size={16} color={COLORS.white} />
+                  <Text style={styles.statusLabel}>9:00 - 22:00</Text>
+                </View>
+              </TouchableOpacity>
+            </Animated.View>
+
+            {/* Header compacto */}
+            <Animated.View style={[styles.headerCompact, { opacity: headerTitleOpacity }]}>
+              <View style={styles.compactLeft}>
+                <Ionicons name="storefront" size={22} color={COLORS.white} />
+                <Text style={styles.compactTitle}>{store?.name || 'Mi Comercio'}</Text>
+              </View>
+              <View style={[styles.compactStatus, { 
+                backgroundColor: store?.isOpen ? '#4CAF50' : '#F44336' 
+              }]}>
+                <View style={styles.compactStatusDot} />
+              </View>
+            </Animated.View>
+          </SafeAreaView>
+        </LinearGradient>
+      </Animated.View>
+    </View>
   );
 }
 
@@ -252,9 +369,21 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
+  headerAnimated: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: HEADER_MAX_HEIGHT,
+    overflow: 'hidden',
+    zIndex: 10,
+  },
+  headerSafeArea: {
+    flex: 1,
+  },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 24,
+    paddingBottom: 100,
   },
   scrollContentDesktop: {
     alignSelf: 'center',
@@ -262,71 +391,195 @@ const styles = StyleSheet.create({
     maxWidth: 1200,
   },
   headerGradient: {
+    flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 80,
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
+    paddingTop: 35,
+    justifyContent: 'flex-end',
+    paddingBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 6,
   },
-  headerContent: {
+  headerExpanded: {
+    paddingBottom: 28,
+  },
+  headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 18,
   },
-  greeting: {
-    fontSize: 16,
-    color: COLORS.white,
-    opacity: 0.9,
-    marginBottom: 4,
-  },
-  storeName: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: COLORS.white,
-  },
-  storeStatusBadge: {
+  headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
-  statusDot: {
+  storeIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.35)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  storeInfo: {
+    justifyContent: 'center',
+  },
+  notificationButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: 'rgba(255, 255, 255, 0.22)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: -3,
+    right: -3,
+    backgroundColor: COLORS.danger,
+    borderRadius: 11,
+    minWidth: 22,
+    height: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    borderWidth: 2.5,
+    borderColor: COLORS.primary,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+  },
+  notificationBadgeText: {
+    color: COLORS.white,
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
+  statusBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 16,
+    backdropFilter: 'blur(10px)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+  },
+  statusItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  statusIndicator: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+  },
+  statusLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: COLORS.white,
+    letterSpacing: 0.1,
+  },
+  statusDivider: {
+    width: 1,
+    height: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    marginHorizontal: 12,
+  },
+  headerCompact: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 1
+  },
+  compactLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  compactTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: COLORS.white,
+    letterSpacing: 0.2,
+  },
+  compactStatus: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  compactStatusDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    marginRight: 6,
+    backgroundColor: COLORS.white,
   },
-  statusText: {
-    fontSize: 14,
-    fontWeight: '600',
+  greeting: {
+    fontSize: 13,
     color: COLORS.white,
+    opacity: 0.9,
+    marginBottom: 2,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+  },
+  storeName: {
+    fontSize: 20,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+    color: COLORS.white,
+    maxWidth: 180,
   },
   statsSection: {
-    marginTop: -60,
+    marginTop: 0,
     paddingHorizontal: 20,
   },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginHorizontal: -6,
+    marginHorizontal: -8,
   },
   statsGridDesktop: {
     flexWrap: 'nowrap',
   },
   statCard: {
     width: '48%',
-    margin: 6,
+    margin: 8,
   },
   statCardDesktop: {
     width: '23%',
   },
   section: {
     paddingHorizontal: 20,
-    marginTop: 24,
+    marginTop: 28,
   },
   sectionHeader: {
     flexDirection: 'row',
