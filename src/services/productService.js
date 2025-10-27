@@ -11,12 +11,12 @@ import {
   orderBy,
   serverTimestamp,
 } from 'firebase/firestore';
-import { uploadImageToCloudinary } from './cloudinaryService';
+import { uploadImageToImgBB } from './imgbbService';
 
-// Subir imagen de producto a Cloudinary
+// Subir imagen de producto a ImgBB
 export const uploadProductImage = async (imageUri, storeId) => {
   try {
-    const result = await uploadImageToCloudinary(imageUri);
+    const result = await uploadImageToImgBB(imageUri);
     return result;
   } catch (error) {
     console.error('Error uploading image:', error);

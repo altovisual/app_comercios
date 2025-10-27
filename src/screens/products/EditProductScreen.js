@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -19,12 +19,16 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { COLORS } from '../../constants';
 import { useAuth } from '../../context/AuthContext';
-import { addProduct, uploadProductImage } from '../../services/productService';
+import { updateProduct, uploadProductImage } from '../../services/productService';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../../config/firebase';
 import ExtrasManager from '../../components/ExtrasManager';
 
-export default function AddProductScreen({ navigation }) {
+export default function EditProductScreen({ navigation, route }) {
+  const { productId } = route.params;
   const { store } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [loadingProduct, setLoadingProduct] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -34,6 +38,35 @@ export default function AddProductScreen({ navigation }) {
     image: null,
     extras: [],
   });
+
+  useEffect(() => {
+    loadProduct();
+  }, [productId]);
+
+  const loadProduct = async () => {
+    try {
+      const productRef = doc(db, 'products', productId);
+      const productSnap = await getDoc(productRef);
+      
+      if (productSnap.exists()) {
+        const data = productSnap.data();
+        setFormData({
+          name: data.name || '',
+          description: data.description || '',
+          price: data.price?.toString() || '',
+          category: data.category || '',
+          available: data.available !== false,
+          image: data.image || null,
+          extras: data.extras || [],
+        });
+      }
+    } catch (error) {
+      console.error('Error loading product:', error);
+      Alert.alert('Error', 'No se pudo cargar el producto');
+    } finally {
+      setLoadingProduct(false);
+    }
+  };
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -82,7 +115,7 @@ export default function AddProductScreen({ navigation }) {
 
   const showImageOptions = () => {
     Alert.alert(
-      'Agregar Imagen',
+      'Cambiar Imagen',
       'Selecciona una opción',
       [
         { text: 'Tomar Foto', onPress: takePhoto },
@@ -107,19 +140,18 @@ export default function AddProductScreen({ navigation }) {
     setLoading(true);
 
     try {
-      let imageUrl = null;
+      let imageUrl = formData.image;
 
-      // Subir imagen si existe
-      if (formData.image) {
+      // Subir nueva imagen si cambió
+      if (formData.image && formData.image.startsWith('file://')) {
         const uploadResult = await uploadProductImage(formData.image, store.id);
         if (uploadResult.success) {
           imageUrl = uploadResult.url;
         }
       }
 
-      // Crear producto
+      // Actualizar producto
       const productData = {
-        storeId: store.id,
         name: formData.name.trim(),
         description: formData.description.trim(),
         price: parseFloat(formData.price),
@@ -129,12 +161,12 @@ export default function AddProductScreen({ navigation }) {
         extras: formData.extras || [],
       };
 
-      const result = await addProduct(productData);
+      const result = await updateProduct(productId, productData);
 
       if (result.success) {
         Alert.alert(
           '¡Éxito!',
-          'Producto agregado correctamente',
+          'Producto actualizado correctamente',
           [
             {
               text: 'OK',
@@ -143,15 +175,26 @@ export default function AddProductScreen({ navigation }) {
           ]
         );
       } else {
-        Alert.alert('Error', 'No se pudo agregar el producto');
+        Alert.alert('Error', 'No se pudo actualizar el producto');
       }
     } catch (error) {
-      console.error('Error adding product:', error);
-      Alert.alert('Error', 'Ocurrió un error al agregar el producto');
+      console.error('Error updating product:', error);
+      Alert.alert('Error', 'Ocurrió un error al actualizar el producto');
     } finally {
       setLoading(false);
     }
   };
+
+  if (loadingProduct) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+          <Text style={styles.loadingText}>Cargando producto...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -163,7 +206,7 @@ export default function AddProductScreen({ navigation }) {
         >
           <Ionicons name="chevron-back" size={28} color={COLORS.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Nuevo Producto</Text>
+        <Text style={styles.headerTitle}>Editar Producto</Text>
         <View style={styles.headerRight} />
       </View>
 
@@ -197,7 +240,7 @@ export default function AddProductScreen({ navigation }) {
               <View style={styles.imagePlaceholder}>
                 <Ionicons name="camera" size={40} color={COLORS.textLight} />
                 <Text style={styles.imagePlaceholderText}>
-                  Toca para agregar foto
+                  Toca para cambiar foto
                 </Text>
               </View>
             )}
@@ -309,7 +352,7 @@ export default function AddProductScreen({ navigation }) {
           ) : (
             <>
               <Ionicons name="checkmark-circle" size={20} color={COLORS.white} />
-              <Text style={styles.saveButtonText}>Guardar Producto</Text>
+              <Text style={styles.saveButtonText}>Guardar Cambios</Text>
             </>
           )}
         </TouchableOpacity>
@@ -322,6 +365,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: COLORS.textLight,
   },
   header: {
     flexDirection: 'row',
