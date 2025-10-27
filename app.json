@@ -23,7 +23,7 @@
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Necesitamos tu ubicación para rastrear entregas en tiempo real."
       },
       "config": {
-        "googleMapsApiKey": "AIzaSyB4UadWa3btvkq3Np2s0WRt1QDwdP9IUR4"
+        "googleMapsApiKey": "GOOGLE_MAPS_API_KEY_PLACEHOLDER"
       }
     },
     "android": {
@@ -44,7 +44,7 @@
       ],
       "config": {
         "googleMaps": {
-          "apiKey": "AIzaSyB4UadWa3btvkq3Np2s0WRt1QDwdP9IUR4"
+          "apiKey": "GOOGLE_MAPS_API_KEY_PLACEHOLDER"
         }
       }
     },
