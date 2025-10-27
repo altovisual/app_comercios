@@ -122,7 +122,7 @@ export default function OrderDetailScreen({ route, navigation }) {
 
       <ScrollView 
         style={styles.content} 
-        contentContainerStyle={{ paddingBottom: 100 }}
+        contentContainerStyle={{ paddingBottom: 160 }}
         showsVerticalScrollIndicator={false}
         bounces={false}
       >
@@ -341,16 +341,18 @@ export default function OrderDetailScreen({ route, navigation }) {
 
       {/* Driver Info for PICKED_UP status */}
       {order.status === ORDER_STATUS.PICKED_UP && order.driver && (
-        <View style={[styles.driverInfoFooter, { paddingBottom: Math.max(insets.bottom + 16, 28) }]}>
-          <View style={styles.driverInfoContent}>
-            <Ionicons name="bicycle" size={24} color={COLORS.success} />
-            <View style={styles.driverInfoText}>
-              <Text style={styles.driverInfoLabel}>Pedido en camino</Text>
-              <Text style={styles.driverInfoName}>{order.driver.name} está entregando</Text>
+        <View style={styles.deliveryStatusFooter}>
+          <View style={styles.deliveryStatusContent}>
+            <View style={styles.deliveryIconContainer}>
+              <Ionicons name="bicycle" size={20} color={COLORS.white} />
+            </View>
+            <View style={styles.deliveryTextContainer}>
+              <Text style={styles.deliveryStatusLabel}>En camino al cliente</Text>
+              <Text style={styles.deliveryDriverName}>{order.driver.name}</Text>
             </View>
           </View>
-          <TouchableOpacity style={styles.callButton}>
-            <Ionicons name="call" size={20} color={COLORS.primary} />
+          <TouchableOpacity style={styles.deliveryCallButton}>
+            <Ionicons name="call" size={18} color={COLORS.white} />
           </TouchableOpacity>
         </View>
       )}
@@ -744,7 +746,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: COLORS.white,
   },
-  driverInfoFooter: {
+  deliveryStatusFooter: {
     position: 'absolute',
     bottom: 60,
     left: 0,
@@ -752,48 +754,55 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: COLORS.primary + '10',
+    backgroundColor: COLORS.success,
     paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.primary + '20',
+    paddingVertical: 14,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  driverInfoContent: {
+  deliveryStatusContent: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
   },
-  driverInfoText: {
-    marginLeft: 12,
-  },
-  driverInfoLabel: {
-    fontSize: 12,
-    color: COLORS.textLight,
-    marginBottom: 2,
-  },
-  driverInfoName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: COLORS.text,
-  },
-  callButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: COLORS.white,
+  deliveryIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+  },
+  deliveryTextContainer: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  deliveryStatusLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORS.white,
+    marginBottom: 2,
+  },
+  deliveryDriverName: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.85)',
+  },
+  deliveryCallButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 40,
+    padding: 32,
   },
   errorText: {
     fontSize: 18,
