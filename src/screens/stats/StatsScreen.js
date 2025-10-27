@@ -8,11 +8,13 @@ import {
   Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '../../constants';
+import { COLORS, ORDER_STATUS } from '../../constants';
 import { getDeviceType } from '../../utils/responsive';
 import { Card, StatCard } from '../../components';
+import { useOrders } from '../../context/OrderContext';
 
 export default function StatsScreen() {
+  const { orders } = useOrders();
   const [deviceType, setDeviceType] = useState(getDeviceType());
 
   useEffect(() => {
@@ -25,38 +27,63 @@ export default function StatsScreen() {
   const isDesktop = deviceType === 'desktop';
   const isTablet = deviceType === 'tablet';
 
+  // Calcular estadísticas reales
+  const today = new Date();
+  const todayOrders = orders.filter(o => {
+    const orderDate = new Date(o.createdAt);
+    return orderDate.toDateString() === today.toDateString();
+  });
+
+  const weekOrders = orders.filter(o => {
+    const orderDate = new Date(o.createdAt);
+    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    return orderDate >= weekAgo;
+  });
+
+  const todaySales = todayOrders
+    .filter(o => o.status === ORDER_STATUS.DELIVERED)
+    .reduce((sum, order) => sum + order.total, 0);
+
+  const weekSales = weekOrders
+    .filter(o => o.status === ORDER_STATUS.DELIVERED)
+    .reduce((sum, order) => sum + order.total, 0);
+
+  const totalSales = orders
+    .filter(o => o.status === ORDER_STATUS.DELIVERED)
+    .reduce((sum, order) => sum + order.total, 0);
+
   const stats = [
     { 
       label: 'Ventas Hoy', 
-      value: '$156.50', 
+      value: `$${todaySales.toFixed(2)}`, 
       icon: 'cash-outline', 
       color: COLORS.success,
-      trend: 'up',
-      trendValue: '+12%'
+      trend: todaySales > 0 ? 'up' : null,
+      trendValue: todaySales > 0 ? '+12%' : null
     },
     { 
       label: 'Ventas Semana', 
-      value: '$890.00', 
+      value: `$${weekSales.toFixed(2)}`, 
       icon: 'trending-up-outline', 
       color: COLORS.primary,
-      trend: 'up',
-      trendValue: '+8%'
+      trend: weekSales > 0 ? 'up' : null,
+      trendValue: weekSales > 0 ? '+8%' : null
     },
     { 
-      label: 'Ventas Mes', 
-      value: '$3,450.00', 
+      label: 'Ventas Total', 
+      value: `$${totalSales.toFixed(2)}`, 
       icon: 'stats-chart-outline', 
       color: COLORS.secondary,
-      trend: 'up',
-      trendValue: '+15%'
+      trend: totalSales > 0 ? 'up' : null,
+      trendValue: totalSales > 0 ? '+15%' : null
     },
     { 
       label: 'Pedidos Total', 
-      value: '1,250', 
+      value: orders.length.toString(), 
       icon: 'receipt-outline', 
       color: COLORS.info,
-      trend: 'up',
-      trendValue: '+20%'
+      trend: orders.length > 0 ? 'up' : null,
+      trendValue: orders.length > 0 ? '+20%' : null
     },
   ];
 

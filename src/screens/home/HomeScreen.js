@@ -227,7 +227,13 @@ export default function HomeScreen({ navigation }) {
                 </View>
                 <View style={styles.orderFooter}>
                   <Text style={styles.orderTotal}>${order.total.toFixed(2)}</Text>
-                  <TouchableOpacity style={styles.viewOrderButton}>
+                  <TouchableOpacity 
+                    style={styles.viewOrderButton}
+                    onPress={() => navigation.navigate('Orders', { 
+                      screen: 'OrderDetail', 
+                      params: { orderId: order.id } 
+                    })}
+                  >
                     <Text style={styles.viewOrderButtonText}>Ver detalles</Text>
                     <Ionicons name="chevron-forward" size={16} color={COLORS.primary} />
                   </TouchableOpacity>

@@ -6,7 +6,7 @@ import { COLORS } from '../constants';
 import { useOrders } from '../context/OrderContext';
 
 import HomeScreen from '../screens/home/HomeScreen';
-import OrdersScreen from '../screens/orders/OrdersScreen';
+import OrdersNavigator from './OrdersNavigator';
 import MenuScreen from '../screens/menu/MenuScreen';
 import StatsScreen from '../screens/stats/StatsScreen';
 import SettingsScreen from '../screens/settings/SettingsScreen';
@@ -69,7 +69,7 @@ export default function TabNavigator() {
       />
       <Tab.Screen 
         name="Orders" 
-        component={OrdersScreen}
+        component={OrdersNavigator}
         options={{ tabBarLabel: 'Pedidos' }}
       />
       <Tab.Screen 

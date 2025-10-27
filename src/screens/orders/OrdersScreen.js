@@ -15,8 +15,8 @@ import { useOrders } from '../../context/OrderContext';
 import { getDeviceType } from '../../utils/responsive';
 import { Card, Badge, Button, EmptyState } from '../../components';
 
-export default function OrdersScreen() {
-  const { orders } = useOrders();
+export default function OrdersScreen({ navigation }) {
+  const { orders, acceptOrder, startPreparing, markReady, cancelOrder } = useOrders();
   const [filter, setFilter] = useState('all');
   const [deviceType, setDeviceType] = useState(getDeviceType());
 
@@ -54,6 +54,10 @@ export default function OrdersScreen() {
   };
 
   const renderOrder = ({ item }) => (
+    <TouchableOpacity 
+      activeOpacity={0.7}
+      onPress={() => navigation.navigate('OrderDetail', { orderId: item.id })}
+    >
     <Card style={[styles.orderCard, numColumns > 1 && styles.orderCardGrid]}>
       {/* Header */}
       <View style={styles.orderHeader}>
@@ -117,10 +121,13 @@ export default function OrdersScreen() {
                 title="Aceptar"
                 variant="success"
                 size="small"
-                onPress={() => {}}
+                onPress={() => acceptOrder(item.id)}
                 style={styles.actionButton}
               />
-              <TouchableOpacity style={styles.rejectButton}>
+              <TouchableOpacity 
+                style={styles.rejectButton}
+                onPress={() => cancelOrder(item.id)}
+              >
                 <Ionicons name="close" size={20} color={COLORS.danger} />
               </TouchableOpacity>
             </>
@@ -131,7 +138,7 @@ export default function OrdersScreen() {
               variant="primary"
               size="small"
               icon="play"
-              onPress={() => {}}
+              onPress={() => startPreparing(item.id)}
               style={styles.actionButton}
             />
           )}
@@ -141,7 +148,7 @@ export default function OrdersScreen() {
               variant="success"
               size="small"
               icon="checkmark"
-              onPress={() => {}}
+              onPress={() => markReady(item.id)}
               style={styles.actionButton}
             />
           )}
@@ -151,13 +158,14 @@ export default function OrdersScreen() {
               variant="outline"
               size="small"
               icon="eye"
-              onPress={() => {}}
+              onPress={() => navigation.navigate('OrderDetail', { orderId: item.id })}
               style={styles.actionButton}
             />
           )}
         </View>
       </View>
     </Card>
+    </TouchableOpacity>
   );
 
   return (
