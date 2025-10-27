@@ -21,6 +21,7 @@ import { COLORS } from '../../constants';
 import { useAuth } from '../../context/AuthContext';
 import { addProduct, uploadProductImage } from '../../services/productService';
 import ExtrasManager from '../../components/ExtrasManager';
+import CategorySelector from '../../components/CategorySelector';
 
 export default function AddProductScreen({ navigation }) {
   const { store } = useAuth();
@@ -245,15 +246,10 @@ export default function AddProductScreen({ navigation }) {
         </View>
 
         {/* Categoría */}
-        <View style={styles.section}>
-          <Text style={styles.label}>Categoría</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Ej: Hamburguesas, Bebidas, Postres"
-            value={formData.category}
-            onChangeText={(text) => setFormData({ ...formData, category: text })}
-          />
-        </View>
+        <CategorySelector
+          selectedCategory={formData.category}
+          onCategoryChange={(category) => setFormData({ ...formData, category })}
+        />
 
         {/* Extras */}
         <ExtrasManager

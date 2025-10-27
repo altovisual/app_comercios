@@ -23,6 +23,7 @@ import { updateProduct, uploadProductImage } from '../../services/productService
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import ExtrasManager from '../../components/ExtrasManager';
+import CategorySelector from '../../components/CategorySelector';
 
 export default function EditProductScreen({ navigation, route }) {
   const { productId } = route.params;
@@ -288,15 +289,10 @@ export default function EditProductScreen({ navigation, route }) {
         </View>
 
         {/* Categoría */}
-        <View style={styles.section}>
-          <Text style={styles.label}>Categoría</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Ej: Hamburguesas, Bebidas, Postres"
-            value={formData.category}
-            onChangeText={(text) => setFormData({ ...formData, category: text })}
-          />
-        </View>
+        <CategorySelector
+          selectedCategory={formData.category}
+          onCategoryChange={(category) => setFormData({ ...formData, category })}
+        />
 
         {/* Extras */}
         <ExtrasManager

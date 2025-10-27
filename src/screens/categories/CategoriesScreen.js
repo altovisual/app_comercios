@@ -8,6 +8,10 @@ import {
   TextInput,
   Alert,
   Modal,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -173,36 +177,54 @@ export default function CategoriesScreen({ navigation }) {
         animationType="slide"
         onRequestClose={() => setModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>
-              {editingCategory ? 'Editar Categoría' : 'Nueva Categoría'}
-            </Text>
-            
-            <TextInput
-              style={styles.input}
-              placeholder="Nombre de la categoría"
-              value={categoryName}
-              onChangeText={setCategoryName}
-              autoFocus
-            />
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={styles.modalOverlay}>
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              style={styles.keyboardView}
+            >
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>
+                  {editingCategory ? 'Editar Categoría' : 'Nueva Categoría'}
+                </Text>
+                
+                <TextInput
+                  style={styles.input}
+                  placeholder="Nombre de la categoría"
+                  value={categoryName}
+                  onChangeText={setCategoryName}
+                  autoFocus
+                  returnKeyType="done"
+                  onSubmitEditing={() => {
+                    Keyboard.dismiss();
+                    handleSaveCategory();
+                  }}
+                />
 
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={styles.cancelButtonText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.saveButton}
-                onPress={handleSaveCategory}
-              >
-                <Text style={styles.saveButtonText}>Guardar</Text>
-              </TouchableOpacity>
-            </View>
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    style={styles.cancelButton}
+                    onPress={() => {
+                      Keyboard.dismiss();
+                      setModalVisible(false);
+                    }}
+                  >
+                    <Text style={styles.cancelButtonText}>Cancelar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.saveButton}
+                    onPress={() => {
+                      Keyboard.dismiss();
+                      handleSaveCategory();
+                    }}
+                  >
+                    <Text style={styles.saveButtonText}>Guardar</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </KeyboardAvoidingView>
           </View>
-        </View>
+        </TouchableWithoutFeedback>
       </Modal>
     </SafeAreaView>
   );
@@ -321,12 +343,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  keyboardView: {
+    width: '85%',
+    maxWidth: 400,
+  },
   modalContent: {
     backgroundColor: COLORS.white,
     borderRadius: 16,
     padding: 24,
-    width: '85%',
-    maxWidth: 400,
   },
   modalTitle: {
     fontSize: 20,

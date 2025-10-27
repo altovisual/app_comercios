@@ -1,15 +1,36 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
 import OrdersScreen from '../screens/orders/OrdersScreen';
 import OrderDetailScreen from '../screens/orders/OrderDetailScreen';
 
 const Stack = createStackNavigator();
 
-export default function OrdersNavigator() {
+function OrdersStackNavigator() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator 
+      screenOptions={{ headerShown: false }}
+      initialRouteName="OrdersList"
+    >
       <Stack.Screen name="OrdersList" component={OrdersScreen} />
       <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
     </Stack.Navigator>
   );
+}
+
+export default function OrdersNavigator() {
+  const navigation = useNavigation();
+  const isFocused = useIsFocused();
+
+  React.useEffect(() => {
+    if (isFocused) {
+      // Resetear el stack al volver al tab
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'OrdersList' }],
+      });
+    }
+  }, [isFocused]);
+
+  return <OrdersStackNavigator />;
 }

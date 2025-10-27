@@ -19,6 +19,7 @@ export default function TabNavigator() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
+        unmountOnBlur: true,
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
 

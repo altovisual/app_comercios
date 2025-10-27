@@ -387,10 +387,20 @@ const styles = StyleSheet.create({
     borderBottomColor: COLORS.borderLight,
   },
   backButton: {
-    width: 44,
-    height: 44,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  backButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  backButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.primary,
   },
   headerTitle: {
     fontSize: 17,
