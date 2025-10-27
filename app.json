@@ -16,7 +16,15 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.mototaxi.merchant"
+      "bundleIdentifier": "com.mototaxi.merchant",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Necesitamos tu ubicación para mostrar pedidos cercanos y calcular rutas de entrega.",
+        "NSLocationAlwaysUsageDescription": "Necesitamos tu ubicación para rastrear entregas en tiempo real.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Necesitamos tu ubicación para rastrear entregas en tiempo real."
+      },
+      "config": {
+        "googleMapsApiKey": "AIzaSyB4UadWa3btvkq3Np2s0WRt1QDwdP9IUR4"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -29,6 +37,15 @@
         "visible": "immersive",
         "barStyle": "light-content",
         "backgroundColor": "#ffffff"
+      },
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyB4UadWa3btvkq3Np2s0WRt1QDwdP9IUR4"
+        }
       }
     },
     "web": {
