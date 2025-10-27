@@ -7,7 +7,7 @@ import { useOrders } from '../context/OrderContext';
 
 import HomeScreen from '../screens/home/HomeScreen';
 import OrdersNavigator from './OrdersNavigator';
-import MenuScreen from '../screens/menu/MenuScreen';
+import ProductsNavigator from './ProductsNavigator';
 import StatsScreen from '../screens/stats/StatsScreen';
 import SettingsScreen from '../screens/settings/SettingsScreen';
 
@@ -26,8 +26,8 @@ export default function TabNavigator() {
             iconName = focused ? 'home' : 'home-outline';
           } else if (route.name === 'Orders') {
             iconName = focused ? 'receipt' : 'receipt-outline';
-          } else if (route.name === 'Menu') {
-            iconName = focused ? 'restaurant' : 'restaurant-outline';
+          } else if (route.name === 'Products') {
+            iconName = focused ? 'basket' : 'basket-outline';
           } else if (route.name === 'Stats') {
             iconName = focused ? 'stats-chart' : 'stats-chart-outline';
           } else if (route.name === 'Settings') {
@@ -74,9 +74,9 @@ export default function TabNavigator() {
         options={{ tabBarLabel: 'Pedidos' }}
       />
       <Tab.Screen 
-        name="Menu" 
-        component={MenuScreen}
-        options={{ tabBarLabel: 'Menú' }}
+        name="Products" 
+        component={ProductsNavigator}
+        options={{ tabBarLabel: 'Productos' }}
       />
       <Tab.Screen 
         name="Stats" 
