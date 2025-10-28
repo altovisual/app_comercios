@@ -15,18 +15,22 @@ export default function Button({
   style,
   textStyle 
 }) {
+  // Validar variant y size
+  const validVariant = styles[variant] ? variant : 'primary';
+  const validSize = styles[size] ? size : 'medium';
+  
   const buttonStyles = [
     styles.button,
-    styles[variant],
-    styles[size],
+    styles[validVariant],
+    styles[validSize],
     disabled && styles.disabled,
     style,
   ];
 
   const textStyles = [
     styles.text,
-    styles[`${variant}Text`],
-    styles[`${size}Text`],
+    styles[`${validVariant}Text`],
+    styles[`${validSize}Text`],
     textStyle,
   ];
 
@@ -38,14 +42,14 @@ export default function Button({
       activeOpacity={0.7}
     >
       {loading ? (
-        <ActivityIndicator color={variant === 'primary' ? COLORS.white : COLORS.primary} />
+        <ActivityIndicator color={validVariant === 'primary' ? COLORS.white : COLORS.primary} />
       ) : (
         <View style={styles.content}>
           {icon && iconPosition === 'left' && (
             <Ionicons 
               name={icon} 
-              size={size === 'small' ? 16 : size === 'large' ? 24 : 20} 
-              color={variant === 'primary' || variant === 'danger' || variant === 'success' ? COLORS.white : COLORS.primary}
+              size={validSize === 'small' ? 16 : validSize === 'large' ? 24 : 20} 
+              color={validVariant === 'primary' || validVariant === 'danger' || validVariant === 'success' ? COLORS.white : COLORS.primary}
               style={styles.iconLeft}
             />
           )}
@@ -53,8 +57,8 @@ export default function Button({
           {icon && iconPosition === 'right' && (
             <Ionicons 
               name={icon} 
-              size={size === 'small' ? 16 : size === 'large' ? 24 : 20} 
-              color={variant === 'primary' || variant === 'danger' || variant === 'success' ? COLORS.white : COLORS.primary}
+              size={validSize === 'small' ? 16 : validSize === 'large' ? 24 : 20} 
+              color={validVariant === 'primary' || validVariant === 'danger' || validVariant === 'success' ? COLORS.white : COLORS.primary}
               style={styles.iconRight}
             />
           )}

@@ -262,23 +262,25 @@ export default function HomeScreen({ navigation }) {
                     />
                   </View>
                   <Text style={styles.orderTime}>
-                    {new Date(order.createdAt).toLocaleTimeString('es-ES', { 
-                      hour: '2-digit', 
-                      minute: '2-digit' 
-                    })}
+                    {order.createdAt ? (
+                      new Date(order.createdAt?.toDate ? order.createdAt.toDate() : order.createdAt).toLocaleTimeString('es-ES', { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                      })
+                    ) : '--:--'}
                   </Text>
                 </View>
                 <View style={styles.orderBody}>
                   <View style={styles.orderCustomer}>
                     <Ionicons name="person-circle-outline" size={20} color={COLORS.textLight} />
-                    <Text style={styles.customerName}>{order.user.name}</Text>
+                    <Text style={styles.customerName}>{order.customerName || order.user?.name || 'Cliente'}</Text>
                   </View>
                   <Text style={styles.orderItems}>
-                    {order.items.length} producto{order.items.length > 1 ? 's' : ''}
+                    {order.items?.length || 0} producto{(order.items?.length || 0) > 1 ? 's' : ''}
                   </Text>
                 </View>
                 <View style={styles.orderFooter}>
-                  <Text style={styles.orderTotal}>${order.total.toFixed(2)}</Text>
+                  <Text style={styles.orderTotal}>Bs. {(order.total || 0).toFixed(2)}</Text>
                   <TouchableOpacity 
                     style={styles.viewOrderButton}
                     onPress={() => navigation.navigate('Orders', { 

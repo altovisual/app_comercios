@@ -150,7 +150,7 @@ export default function OrderDetailScreen({ route, navigation }) {
                 <Ionicons name="person" size={32} color={COLORS.primary} />
               </View>
               <View style={styles.driverDetails}>
-                <Text style={styles.driverName}>{order.driver.name}</Text>
+                <Text style={styles.driverName}>{order.driver?.name || 'Repartidor'}</Text>
                 <View style={styles.driverMeta}>
                   <View style={styles.driverMetaItem}>
                     <Ionicons name="call" size={14} color={COLORS.textLight} />
@@ -189,15 +189,15 @@ export default function OrderDetailScreen({ route, navigation }) {
           <View style={styles.customerInfo}>
             <View style={styles.infoRow}>
               <Ionicons name="person-outline" size={20} color={COLORS.textLight} />
-              <Text style={styles.infoText}>{order.user.name}</Text>
+              <Text style={styles.infoText}>{order.customerName || order.user?.name || 'Cliente'}</Text>
             </View>
             <View style={styles.infoRow}>
               <Ionicons name="call-outline" size={20} color={COLORS.textLight} />
-              <Text style={styles.infoText}>{order.user.phone}</Text>
+              <Text style={styles.infoText}>{order.customerPhone || order.user?.phone || 'Sin teléfono'}</Text>
             </View>
             <View style={styles.infoRow}>
               <Ionicons name="location-outline" size={20} color={COLORS.textLight} />
-              <Text style={styles.infoText}>{order.destination.address}</Text>
+              <Text style={styles.infoText}>{order.deliveryAddress || order.destination?.address || 'Sin dirección'}</Text>
             </View>
           </View>
         </Card>
@@ -219,9 +219,9 @@ export default function OrderDetailScreen({ route, navigation }) {
                 </View>
                 <View style={styles.itemInfo}>
                   <Text style={styles.itemName}>{item.name}</Text>
-                  <Text style={styles.itemPrice}>${item.price.toFixed(2)} c/u</Text>
+                  <Text style={styles.itemPrice}>Bs. {(item.price || 0).toFixed(2)} c/u</Text>
                 </View>
-                <Text style={styles.itemTotal}>${item.subtotal.toFixed(2)}</Text>
+                <Text style={styles.itemTotal}>Bs. {((item.price || 0) * (item.quantity || 1)).toFixed(2)}</Text>
               </View>
             ))}
           </Card>
@@ -231,15 +231,15 @@ export default function OrderDetailScreen({ route, navigation }) {
         <View style={styles.summaryCard}>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Subtotal</Text>
-            <Text style={styles.summaryValue}>${order.subtotal.toFixed(2)}</Text>
+            <Text style={styles.summaryValue}>Bs. {(order.subtotal || 0).toFixed(2)}</Text>
           </View>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Delivery</Text>
-            <Text style={styles.summaryValue}>${order.deliveryFee.toFixed(2)}</Text>
+            <Text style={styles.summaryValue}>Bs. {(order.deliveryFee || 0).toFixed(2)}</Text>
           </View>
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalValue}>${order.total.toFixed(2)}</Text>
+            <Text style={styles.totalValue}>Bs. {(order.total || 0).toFixed(2)}</Text>
           </View>
         </View>
 
@@ -333,7 +333,7 @@ export default function OrderDetailScreen({ route, navigation }) {
               activeOpacity={0.7}
             >
               <Ionicons name="hand-right" size={22} color={COLORS.white} />
-              <Text style={styles.successButtonText}>Entregar a {order.driver.name}</Text>
+              <Text style={styles.successButtonText}>Entregar a {order.driver?.name || 'Repartidor'}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -348,7 +348,7 @@ export default function OrderDetailScreen({ route, navigation }) {
             </View>
             <View style={styles.deliveryTextContainer}>
               <Text style={styles.deliveryStatusLabel}>En camino al cliente</Text>
-              <Text style={styles.deliveryDriverName}>{order.driver.name}</Text>
+              <Text style={styles.deliveryDriverName}>{order.driver?.name || 'Repartidor'}</Text>
             </View>
           </View>
           <TouchableOpacity style={styles.deliveryCallButton}>

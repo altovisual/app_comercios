@@ -23,30 +23,8 @@ export const OrderProvider = ({ children }) => {
     console.log('🔄 Escuchando pedidos del comercio:', store.id);
     
     const unsubscribe = subscribeToStoreOrders(store.id, (newOrders) => {
-      try {
-        console.log('📦 Pedidos recibidos:', newOrders.length);
-        if (newOrders.length > 0) {
-          console.log('📋 Estructura del primer pedido:', JSON.stringify(newOrders[0], null, 2));
-        }
-        
-        // Validar cada pedido
-        const validOrders = newOrders.map((order, index) => {
-          if (!order.id) {
-            console.warn(`⚠️ Pedido ${index} sin ID`);
-          }
-          if (!order.status) {
-            console.warn(`⚠️ Pedido ${index} sin status`);
-          }
-          return order;
-        });
-        
-        console.log('✅ Llamando setOrders...');
-        setOrders(validOrders);
-        console.log('✅ setOrders completado');
-      } catch (error) {
-        console.error('❌ Error en callback de pedidos:', error);
-        console.error('❌ Stack:', error.stack);
-      }
+      console.log('📦 Pedidos recibidos:', newOrders.length);
+      setOrders(newOrders);
     });
 
     return () => {
@@ -56,20 +34,13 @@ export const OrderProvider = ({ children }) => {
   }, [store?.id]);
 
   useEffect(() => {
-    try {
-      console.log('🔢 Calculando contadores para', orders.length, 'pedidos');
-      const pending = orders.filter(o => o.status === 'pending').length;
-      setPendingCount(pending);
-      
-      const active = orders.filter(o => 
-        ['pending', 'accepted', 'preparing', 'ready'].includes(o.status)
-      );
-      setActiveOrders(active);
-      console.log('✅ Contadores actualizados: pending=', pending, 'active=', active.length);
-    } catch (error) {
-      console.error('❌ Error calculando contadores:', error);
-      console.error('❌ Stack:', error.stack);
-    }
+    const pending = orders.filter(o => o.status === 'pending').length;
+    setPendingCount(pending);
+    
+    const active = orders.filter(o => 
+      ['pending', 'accepted', 'preparing', 'ready'].includes(o.status)
+    );
+    setActiveOrders(active);
   }, [orders]);
 
   const acceptOrder = async (orderId) => {

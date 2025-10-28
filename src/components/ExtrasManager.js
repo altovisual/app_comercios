@@ -50,6 +50,7 @@ export default function ExtrasManager({ extras = [], onExtrasChange }) {
     }
 
     const newExtra = {
+      id: editingExtra !== null ? extraData.id : `extra_${Date.now()}`,
       name: extraData.name.trim(),
       price: parseFloat(extraData.price),
       required: extraData.required,

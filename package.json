@@ -7,7 +7,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "seed": "node scripts/seedFirestore.js"
+    "seed": "node scripts/seedFirestore.js",
+    "clear-orders": "node scripts/clearOrders.js"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
@@ -40,7 +41,8 @@
     "victory-native": "^36.9.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.20.0"
+    "@babel/core": "^7.20.0",
+    "typescript": "~5.9.2"
   },
   "private": true
 }

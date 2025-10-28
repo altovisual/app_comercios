@@ -1,7 +1,7 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth, db } from '../config/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 
 const AuthContext = createContext({});
 
@@ -77,11 +77,20 @@ export const AuthProvider = ({ children }) => {
   const updateStore = async (updates) => {
     try {
       const updatedStore = { ...store, ...updates };
+      
+      // Actualizar en Firebase
+      const storeRef = doc(db, 'stores', store.id);
+      await updateDoc(storeRef, updates);
+      
+      console.log('✅ Comercio actualizado en Firebase:', updates);
+      
+      // Actualizar en AsyncStorage local
       await AsyncStorage.setItem('merchantStore', JSON.stringify(updatedStore));
       setStore(updatedStore);
+      
       return { success: true };
     } catch (error) {
-      console.error('Update store error:', error);
+      console.error('❌ Error actualizando comercio:', error);
       return { success: false, error: error.message };
     }
   };

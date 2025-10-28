@@ -1,0 +1,14 @@
+{
+  "typescript.validate.enable": false,
+  "javascript.validate.enable": true,
+  "files.exclude": {
+    "**/.git": true,
+    "**/.DS_Store": true,
+    "**/node_modules": false
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/bower_components": true
+  },
+  "typescript.tsdk": "node_modules/typescript/lib"
+}

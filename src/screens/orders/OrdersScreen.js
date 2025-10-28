@@ -15,6 +15,7 @@ import { COLORS, ORDER_STATUS, ORDER_STATUS_LABELS } from '../../constants';
 import { useOrders } from '../../context/OrderContext';
 import { getDeviceType } from '../../utils/responsive';
 import { Card, Badge, Button, EmptyState, RejectOrderModal } from '../../components';
+import ErrorBoundary from '../../components/ErrorBoundary';
 
 export default function OrdersScreen({ navigation }) {
   const { orders, acceptOrder, startPreparing, markReady, cancelOrder } = useOrders();
@@ -42,9 +43,9 @@ export default function OrdersScreen({ navigation }) {
 
   const filters = [
     { key: 'all', label: 'Todos', icon: 'apps' },
-    { key: ORDER_STATUS.PENDING, label: 'Pendientes', icon: 'time' },
-    { key: ORDER_STATUS.PREPARING, label: 'Preparando', icon: 'restaurant' },
-    { key: ORDER_STATUS.READY, label: 'Listos', icon: 'checkmark-circle' },
+    { key: 'pending', label: 'Pendientes', icon: 'time' },
+    { key: 'preparing', label: 'Preparando', icon: 'restaurant' },
+    { key: 'ready', label: 'Listos', icon: 'checkmark-circle' },
   ];
 
   const filteredOrders = filter === 'all' 
@@ -53,12 +54,13 @@ export default function OrdersScreen({ navigation }) {
 
   const getStatusVariant = (status) => {
     const variants = {
-      [ORDER_STATUS.PENDING]: 'warning',
-      [ORDER_STATUS.ACCEPTED]: 'info',
-      [ORDER_STATUS.PREPARING]: 'warning',
-      [ORDER_STATUS.READY]: 'success',
-      [ORDER_STATUS.DELIVERED]: 'success',
-      [ORDER_STATUS.CANCELLED]: 'danger',
+      'pending': 'warning',
+      'accepted': 'info',
+      'preparing': 'warning',
+      'ready': 'success',
+      'in_delivery': 'info',
+      'delivered': 'success',
+      'cancelled': 'danger',
     };
     return variants[status] || 'neutral';
   };
@@ -70,30 +72,34 @@ export default function OrdersScreen({ navigation }) {
     }
   };
 
-  const renderOrder = ({ item }) => (
-    <TouchableOpacity 
-      activeOpacity={0.7}
-      onPress={() => navigation.navigate('OrderDetail', { orderId: item.id })}
-    >
-    <Card style={[styles.orderCard, numColumns > 1 && styles.orderCardGrid]}>
-      {/* Header */}
-      <View style={styles.orderHeader}>
+  const renderOrder = ({ item }) => {
+    try {
+      return (
+        <TouchableOpacity 
+          activeOpacity={0.7}
+          onPress={() => navigation.navigate('OrderDetail', { orderId: item.id })}
+        >
+        <Card style={[styles.orderCard, numColumns > 1 && styles.orderCardGrid]}>
+          {/* Header */}
+          <View style={styles.orderHeader}>
         <View style={styles.orderHeaderLeft}>
           <View style={styles.orderIdContainer}>
             <Ionicons name="receipt" size={18} color={COLORS.primary} />
             <Text style={styles.orderId}>#{item.id.slice(-6)}</Text>
           </View>
           <Badge 
-            label={ORDER_STATUS_LABELS[item.status]} 
+            label={ORDER_STATUS_LABELS[item.status] || item.status || 'Desconocido'} 
             variant={getStatusVariant(item.status)}
             size="small"
           />
         </View>
         <Text style={styles.orderTime}>
-          {new Date(item.createdAt).toLocaleTimeString('es-ES', { 
-            hour: '2-digit', 
-            minute: '2-digit' 
-          })}
+          {item.createdAt ? (
+            new Date(item.createdAt?.toDate ? item.createdAt.toDate() : item.createdAt).toLocaleTimeString('es-ES', { 
+              hour: '2-digit', 
+              minute: '2-digit' 
+            })
+          ) : '--:--'}
         </Text>
       </View>
 
@@ -104,8 +110,8 @@ export default function OrdersScreen({ navigation }) {
             <Ionicons name="person" size={20} color={COLORS.primary} />
           </View>
           <View style={styles.customerDetails}>
-            <Text style={styles.customerName}>{item.user.name}</Text>
-            <Text style={styles.customerPhone}>{item.user.phone || 'Sin teléfono'}</Text>
+            <Text style={styles.customerName}>{item.customerName || item.user?.name || 'Cliente'}</Text>
+            <Text style={styles.customerPhone}>{item.customerPhone || item.user?.phone || 'Sin teléfono'}</Text>
           </View>
         </View>
       </View>
@@ -113,15 +119,21 @@ export default function OrdersScreen({ navigation }) {
       {/* Items */}
       <View style={styles.itemsSection}>
         <Text style={styles.itemsLabel}>Productos:</Text>
-        {item.items.slice(0, 3).map((product, index) => (
-          <View key={index} style={styles.itemRow}>
-            <Text style={styles.itemQuantity}>{product.quantity}x</Text>
-            <Text style={styles.itemName}>{product.name}</Text>
-            <Text style={styles.itemPrice}>${(product.price * product.quantity).toFixed(2)}</Text>
-          </View>
-        ))}
-        {item.items.length > 3 && (
-          <Text style={styles.moreItems}>+{item.items.length - 3} más...</Text>
+        {item.items && item.items.length > 0 ? (
+          <>
+            {item.items.slice(0, 3).map((product, index) => (
+              <View key={index} style={styles.itemRow}>
+                <Text style={styles.itemQuantity}>{product.quantity || 1}x</Text>
+                <Text style={styles.itemName}>{product.name || 'Producto'}</Text>
+                <Text style={styles.itemPrice}>Bs. {((product.price || 0) * (product.quantity || 1)).toFixed(2)}</Text>
+              </View>
+            ))}
+            {item.items.length > 3 && (
+              <Text style={styles.moreItems}>+{item.items.length - 3} más...</Text>
+            )}
+          </>
+        ) : (
+          <Text style={styles.itemName}>Sin productos</Text>
         )}
       </View>
 
@@ -129,10 +141,10 @@ export default function OrdersScreen({ navigation }) {
       <View style={styles.orderFooter}>
         <View style={styles.totalSection}>
           <Text style={styles.totalLabel}>Total</Text>
-          <Text style={styles.totalValue}>${item.total.toFixed(2)}</Text>
+          <Text style={styles.totalValue}>Bs. {(item.total || 0).toFixed(2)}</Text>
         </View>
         <View style={styles.actions}>
-          {item.status === ORDER_STATUS.PENDING && (
+          {item.status === 'pending' && (
             <>
               <Button
                 title="Aceptar"
@@ -152,7 +164,7 @@ export default function OrdersScreen({ navigation }) {
               </TouchableOpacity>
             </>
           )}
-          {item.status === ORDER_STATUS.ACCEPTED && (
+          {item.status === 'accepted' && (
             <Button
               title="Iniciar"
               variant="primary"
@@ -162,7 +174,7 @@ export default function OrdersScreen({ navigation }) {
               style={styles.actionButton}
             />
           )}
-          {item.status === ORDER_STATUS.PREPARING && (
+          {item.status === 'preparing' && (
             <Button
               title="Listo"
               variant="success"
@@ -172,7 +184,7 @@ export default function OrdersScreen({ navigation }) {
               style={styles.actionButton}
             />
           )}
-          {item.status === ORDER_STATUS.READY && (
+          {item.status === 'ready' && (
             <Button
               title="Ver detalles"
               variant="outline"
@@ -186,9 +198,22 @@ export default function OrdersScreen({ navigation }) {
       </View>
     </Card>
     </TouchableOpacity>
-  );
+      );
+    } catch (error) {
+      console.error('❌ Error renderizando pedido:', error);
+      console.error('❌ Stack:', error.stack);
+      console.error('❌ Pedido:', JSON.stringify(item, null, 2));
+      return (
+        <Card style={styles.orderCard}>
+          <Text style={{ color: 'red' }}>Error: {error.message}</Text>
+          <Text style={{ color: 'red', fontSize: 10 }}>Pedido #{item?.id?.slice(-6)}</Text>
+        </Card>
+      );
+    }
+  };
 
   return (
+    <ErrorBoundary>
     <SafeAreaView style={styles.container}>
       <View style={[styles.contentWrapper, isDesktop && styles.contentWrapperDesktop]}>
         {/* Header */}
@@ -263,7 +288,7 @@ export default function OrdersScreen({ navigation }) {
       </View>
 
       {/* Reject Order Modal */}
-      {selectedOrderForReject && (
+      {selectedOrderForReject && selectedOrderForReject.id && (
         <RejectOrderModal
           visible={showRejectModal}
           onClose={() => {
@@ -272,12 +297,13 @@ export default function OrdersScreen({ navigation }) {
           }}
           onReject={handleRejectOrder}
           orderInfo={{
-            orderId: selectedOrderForReject.id.slice(-6),
-            total: selectedOrderForReject.total,
+            orderId: selectedOrderForReject.id?.slice(-6) || 'N/A',
+            total: selectedOrderForReject.total || 0,
           }}
         />
       )}
     </SafeAreaView>
+    </ErrorBoundary>
   );
 }
 

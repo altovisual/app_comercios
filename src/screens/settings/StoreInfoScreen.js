@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,10 +8,12 @@ import {
   TextInput,
   Alert,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import * as Location from 'expo-location';
 import { COLORS } from '../../constants';
 import { useAuth } from '../../context/AuthContext';
 import { uploadImageToImgBB } from '../../services/imgbbService';
@@ -27,6 +29,33 @@ export default function StoreInfoScreen({ navigation }) {
     address: store?.address || '',
     logo: store?.logo || null,
   });
+
+  const [location, setLocation] = useState(store?.location || {
+    latitude: 10.3394,
+    longitude: -68.7425,
+  });
+  const [loadingLocation, setLoadingLocation] = useState(false);
+
+  const getCurrentLocation = async () => {
+    setLoadingLocation(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === 'granted') {
+        const currentLocation = await Location.getCurrentPositionAsync({});
+        setLocation({
+          latitude: currentLocation.coords.latitude,
+          longitude: currentLocation.coords.longitude,
+        });
+        Alert.alert('✅ Ubicación obtenida', 'Tu ubicación GPS ha sido capturada correctamente');
+      } else {
+        Alert.alert('Permiso denegado', 'Necesitamos acceso a tu ubicación');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'No se pudo obtener la ubicación');
+    } finally {
+      setLoadingLocation(false);
+    }
+  };
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -74,6 +103,10 @@ export default function StoreInfoScreen({ navigation }) {
         email: formData.email.trim(),
         address: formData.address.trim(),
         logo: logoUrl,
+        location: {
+          latitude: location.latitude,
+          longitude: location.longitude,
+        },
       });
 
       Alert.alert('Éxito', 'Información actualizada correctamente');
@@ -183,6 +216,65 @@ export default function StoreInfoScreen({ navigation }) {
             textAlignVertical="top"
           />
         </View>
+
+        {/* Ubicación GPS */}
+        <View style={styles.section}>
+          <Text style={styles.label}>Ubicación del Comercio</Text>
+          <Text style={styles.hint}>
+            Presiona el botón para obtener tu ubicación GPS actual o ingresa las coordenadas manualmente
+          </Text>
+          
+          <TouchableOpacity
+            style={styles.locationButton}
+            onPress={getCurrentLocation}
+            disabled={loadingLocation}
+          >
+            {loadingLocation ? (
+              <ActivityIndicator color={COLORS.white} />
+            ) : (
+              <>
+                <Ionicons name="location" size={24} color={COLORS.white} />
+                <Text style={styles.locationButtonText}>Obtener Mi Ubicación GPS</Text>
+              </>
+            )}
+          </TouchableOpacity>
+
+          <View style={styles.coordinatesContainer}>
+            <View style={styles.coordinateField}>
+              <Text style={styles.coordinateLabel}>Latitud</Text>
+              <TextInput
+                style={styles.coordinateInput}
+                value={location.latitude.toString()}
+                onChangeText={(text) => {
+                  const lat = parseFloat(text) || 0;
+                  setLocation({ ...location, latitude: lat });
+                }}
+                keyboardType="decimal-pad"
+                placeholder="10.3394"
+              />
+            </View>
+            <View style={styles.coordinateField}>
+              <Text style={styles.coordinateLabel}>Longitud</Text>
+              <TextInput
+                style={styles.coordinateInput}
+                value={location.longitude.toString()}
+                onChangeText={(text) => {
+                  const lng = parseFloat(text) || 0;
+                  setLocation({ ...location, longitude: lng });
+                }}
+                keyboardType="decimal-pad"
+                placeholder="-68.7425"
+              />
+            </View>
+          </View>
+
+          <View style={styles.locationInfo}>
+            <Ionicons name="information-circle" size={20} color={COLORS.primary} />
+            <Text style={styles.locationInfoText}>
+              📍 Coordenadas actuales: {location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}
+            </Text>
+          </View>
+        </View>
       </ScrollView>
 
       {/* Footer */}
@@ -290,6 +382,65 @@ const styles = StyleSheet.create({
   textArea: {
     height: 100,
     paddingTop: 12,
+  },
+  hint: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    marginBottom: 12,
+    fontStyle: 'italic',
+  },
+  locationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.primary,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    marginBottom: 16,
+    gap: 8,
+  },
+  locationButtonText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  coordinatesContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 12,
+  },
+  coordinateField: {
+    flex: 1,
+  },
+  coordinateLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginBottom: 6,
+  },
+  coordinateInput: {
+    backgroundColor: COLORS.white,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: COLORS.text,
+  },
+  locationInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.primary + '10',
+    padding: 12,
+    borderRadius: 8,
+    gap: 8,
+  },
+  locationInfoText: {
+    flex: 1,
+    fontSize: 12,
+    color: COLORS.text,
   },
   footer: {
     position: 'absolute',

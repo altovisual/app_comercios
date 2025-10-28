@@ -8,19 +8,23 @@ export default function Badge({
   size = 'medium',
   style 
 }) {
+  // Validar variant
+  const validVariant = styles[variant] ? variant : 'neutral';
+  const validSize = styles[size] ? size : 'medium';
+  
   return (
     <View style={[
       styles.badge,
-      styles[variant],
-      styles[size],
+      styles[validVariant],
+      styles[validSize],
       style,
     ]}>
       <Text style={[
         styles.text,
-        styles[`${variant}Text`],
-        styles[`${size}Text`],
+        styles[`${validVariant}Text`],
+        styles[`${validSize}Text`],
       ]}>
-        {label}
+        {label || ''}
       </Text>
     </View>
   );
