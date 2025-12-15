@@ -20,7 +20,8 @@
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Necesitamos tu ubicación para mostrar pedidos cercanos y calcular rutas de entrega.",
         "NSLocationAlwaysUsageDescription": "Necesitamos tu ubicación para rastrear entregas en tiempo real.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "Necesitamos tu ubicación para rastrear entregas en tiempo real."
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Necesitamos tu ubicación para rastrear entregas en tiempo real.",
+        "NSUserNotificationUsageDescription": "Necesitamos enviarte notificaciones cuando llegue un pedido nuevo."
       },
       "config": {
         "googleMapsApiKey": "GOOGLE_MAPS_API_KEY_PLACEHOLDER"
@@ -40,7 +41,8 @@
       },
       "permissions": [
         "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION"
+        "ACCESS_COARSE_LOCATION",
+        "POST_NOTIFICATIONS"
       ],
       "config": {
         "googleMaps": {

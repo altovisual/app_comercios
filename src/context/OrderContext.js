@@ -1,4 +1,7 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useRef } from 'react';
+import { AppState, Vibration } from 'react-native';
+import * as Notifications from 'expo-notifications';
+import * as Haptics from 'expo-haptics';
 import { ORDER_STATUS } from '../constants';
 import { useAuth } from './AuthContext';
 import { 
@@ -17,8 +20,45 @@ export const OrderProvider = ({ children }) => {
   const [activeOrders, setActiveOrders] = useState([]);
   const [pendingCount, setPendingCount] = useState(0);
 
+  const didInitOrdersRef = useRef(false);
+  const previousOrderIdsRef = useRef(new Set());
+
+  const notifyNewOrder = async (order) => {
+    try {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: 'Nuevo pedido',
+          body: 'Te llegó un pedido nuevo',
+          data: { orderId: order?.id },
+          sound: 'default',
+          channelId: 'orders',
+        },
+        trigger: null,
+      });
+
+      if (AppState.currentState === 'active') {
+        try {
+          Vibration.vibrate([0, 500, 200, 500]);
+        } catch (e) {
+          console.error('Error vibrando:', e);
+        }
+
+        try {
+          await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        } catch (e) {
+          console.error('Error haptics:', e);
+        }
+      }
+    } catch (error) {
+      console.error('Error enviando notificación de pedido:', error);
+    }
+  };
+
   useEffect(() => {
     if (!store?.id) return;
+
+    didInitOrdersRef.current = false;
+    previousOrderIdsRef.current = new Set();
 
     console.log('🔄 Escuchando pedidos del comercio:', store.id);
     
@@ -40,6 +80,21 @@ export const OrderProvider = ({ children }) => {
           return order;
         });
         
+        const currentIds = new Set(validOrders.map(o => o.id).filter(Boolean));
+        if (!didInitOrdersRef.current) {
+          didInitOrdersRef.current = true;
+        } else {
+          const newPendingOrders = validOrders.filter(o =>
+            o?.id &&
+            !previousOrderIdsRef.current.has(o.id) &&
+            o.status === 'pending'
+          );
+          if (newPendingOrders.length > 0) {
+            notifyNewOrder(newPendingOrders[0]);
+          }
+        }
+        previousOrderIdsRef.current = currentIds;
+
         console.log('✅ Llamando setOrders...');
         setOrders(validOrders);
         console.log('✅ setOrders completado');
