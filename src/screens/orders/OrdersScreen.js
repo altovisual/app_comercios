@@ -17,13 +17,20 @@ import { getDeviceType } from '../../utils/responsive';
 import { Card, Badge, Button, EmptyState, RejectOrderModal } from '../../components';
 import ErrorBoundary from '../../components/ErrorBoundary';
 
-export default function OrdersScreen({ navigation }) {
+export default function OrdersScreen({ navigation, route }) {
   const { orders, acceptOrder, startPreparing, markReady, cancelOrder } = useOrders();
   const [filter, setFilter] = useState('all');
   const [deviceType, setDeviceType] = useState(getDeviceType());
   const [refreshing, setRefreshing] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [selectedOrderForReject, setSelectedOrderForReject] = useState(null);
+
+  useEffect(() => {
+    const initialFilter = route?.params?.initialFilter;
+    if (initialFilter) {
+      setFilter(initialFilter);
+    }
+  }, [route?.params?.initialFilter]);
 
   useEffect(() => {
     const subscription = Dimensions.addEventListener('change', () => {

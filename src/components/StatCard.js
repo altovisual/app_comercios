@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../constants';
 import Card from './Card';
@@ -11,9 +11,10 @@ export default function StatCard({
   color = COLORS.primary,
   trend,
   trendValue,
-  style 
+  style,
+  onPress,
 }) {
-  return (
+  const content = (
     <Card style={[styles.card, style]}>
       <View style={styles.header}>
         <View style={[styles.iconContainer, { backgroundColor: color + '15' }]}>
@@ -38,6 +39,18 @@ export default function StatCard({
       <Text style={styles.value}>{value}</Text>
       <Text style={styles.label}>{label}</Text>
     </Card>
+  );
+
+  if (onPress) {
+    return (
+      <TouchableOpacity activeOpacity={0.7} onPress={onPress}>
+        {content}
+      </TouchableOpacity>
+    );
+  }
+
+  return (
+    content
   );
 }
 

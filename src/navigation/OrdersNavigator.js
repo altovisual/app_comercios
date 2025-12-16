@@ -18,7 +18,7 @@ function OrdersStackNavigator() {
   );
 }
 
-export default function OrdersNavigator() {
+export default function OrdersNavigator({ route }) {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
 
@@ -27,10 +27,10 @@ export default function OrdersNavigator() {
       // Resetear el stack al volver al tab
       navigation.reset({
         index: 0,
-        routes: [{ name: 'OrdersList' }],
+        routes: [{ name: 'OrdersList', params: route?.params }],
       });
     }
-  }, [isFocused]);
+  }, [isFocused, navigation, route?.params]);
 
   return <OrdersStackNavigator />;
 }
